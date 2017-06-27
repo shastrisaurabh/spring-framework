@@ -50,6 +50,7 @@ import org.springframework.web.reactive.function.server.RouterFunction;
 import org.springframework.web.reactive.result.method.annotation.ArgumentResolverConfigurer;
 import org.springframework.web.server.WebFilter;
 import org.springframework.web.server.WebHandler;
+import org.springframework.web.server.session.WebSessionManager;
 import org.springframework.web.util.UriBuilder;
 import org.springframework.web.util.UriBuilderFactory;
 
@@ -191,17 +192,25 @@ public interface WebTestClient {
 	interface MockServerSpec<B extends MockServerSpec<B>> {
 
 		/**
-		 * Register one or more {@link WebFilter} instances to apply to the
-		 * mock server.
-		 *
-		 * <p>This could be used for example to apply {@code ServerWebExchange}
-		 * transformations such as setting the Principal (for all requests or a
-		 * subset) via {@link ExchangeMutatorWebFilter}.
-		 *
+		 * Register {@link WebFilter} instances to add to the mock server.
 		 * @param filter one or more filters
-		 * @see ExchangeMutatorWebFilter
 		 */
 		<T extends B> T webFilter(WebFilter... filter);
+
+		/**
+		 * Provide a session manager instance for the mock server.
+		 * <p>By default an instance of
+		 * {@link org.springframework.web.server.session.DefaultWebSessionManager
+		 * DefaultWebSessionManager} is used.
+		 * @param sessionManager the session manager to use
+		 */
+		<T extends B> T webSessionManager(WebSessionManager sessionManager);
+
+		/**
+		 * Shortcut for pre-packaged customizations to the mock server setup.
+		 * @param configurer the configurer to apply
+		 */
+		<T extends B> T apply(MockServerConfigurer configurer);
 
 		/**
 		 * Proceed to configure and build the test client.
@@ -374,6 +383,12 @@ public interface WebTestClient {
 		 */
 		Builder responseTimeout(Duration timeout);
 
+		/**
+		 *
+		 * @param configurer
+		 * @return
+		 */
+		Builder apply(WebTestClientConfigurer configurer);
 
 		/**
 		 * Build the {@link WebTestClient} instance.
