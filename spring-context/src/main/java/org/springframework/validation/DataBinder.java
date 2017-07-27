@@ -120,12 +120,15 @@ public class DataBinder implements PropertyEditorRegistry, TypeConverter {
 	 */
 	protected static final Log logger = LogFactory.getLog(DataBinder.class);
 
+	@Nullable
 	private final Object target;
 
 	private final String objectName;
 
+	@Nullable
 	private AbstractPropertyBindingResult bindingResult;
 
+	@Nullable
 	private SimpleTypeConverter typeConverter;
 
 	private boolean ignoreUnknownFields = true;
@@ -136,14 +139,19 @@ public class DataBinder implements PropertyEditorRegistry, TypeConverter {
 
 	private int autoGrowCollectionLimit = DEFAULT_AUTO_GROW_COLLECTION_LIMIT;
 
+	@Nullable
 	private String[] allowedFields;
 
+	@Nullable
 	private String[] disallowedFields;
 
+	@Nullable
 	private String[] requiredFields;
 
+	@Nullable
 	private ConversionService conversionService;
 
+	@Nullable
 	private MessageCodesResolver messageCodesResolver;
 
 	private BindingErrorProcessor bindingErrorProcessor = new DefaultBindingErrorProcessor();
@@ -167,7 +175,7 @@ public class DataBinder implements PropertyEditorRegistry, TypeConverter {
 	 * if the binder is just used to convert a plain parameter value)
 	 * @param objectName the name of the target object
 	 */
-	public DataBinder(@Nullable Object target, @Nullable String objectName) {
+	public DataBinder(@Nullable Object target, String objectName) {
 		this.target = ObjectUtils.unwrapOptional(target);
 		this.objectName = objectName;
 	}
@@ -416,7 +424,7 @@ public class DataBinder implements PropertyEditorRegistry, TypeConverter {
 	 * @see #setDisallowedFields
 	 * @see #isAllowed(String)
 	 */
-	public void setAllowedFields(String... allowedFields) {
+	public void setAllowedFields(@Nullable String... allowedFields) {
 		this.allowedFields = PropertyAccessorUtils.canonicalPropertyNames(allowedFields);
 	}
 
@@ -424,6 +432,7 @@ public class DataBinder implements PropertyEditorRegistry, TypeConverter {
 	 * Return the fields that should be allowed for binding.
 	 * @return array of field names
 	 */
+	@Nullable
 	public String[] getAllowedFields() {
 		return this.allowedFields;
 	}
@@ -439,7 +448,7 @@ public class DataBinder implements PropertyEditorRegistry, TypeConverter {
 	 * @see #setAllowedFields
 	 * @see #isAllowed(String)
 	 */
-	public void setDisallowedFields(String... disallowedFields) {
+	public void setDisallowedFields(@Nullable String... disallowedFields) {
 		this.disallowedFields = PropertyAccessorUtils.canonicalPropertyNames(disallowedFields);
 	}
 
@@ -447,6 +456,7 @@ public class DataBinder implements PropertyEditorRegistry, TypeConverter {
 	 * Return the fields that should <i>not</i> be allowed for binding.
 	 * @return array of field names
 	 */
+	@Nullable
 	public String[] getDisallowedFields() {
 		return this.disallowedFields;
 	}
@@ -461,7 +471,7 @@ public class DataBinder implements PropertyEditorRegistry, TypeConverter {
 	 * @see #setBindingErrorProcessor
 	 * @see DefaultBindingErrorProcessor#MISSING_FIELD_ERROR_CODE
 	 */
-	public void setRequiredFields(String... requiredFields) {
+	public void setRequiredFields(@Nullable String... requiredFields) {
 		this.requiredFields = PropertyAccessorUtils.canonicalPropertyNames(requiredFields);
 		if (logger.isDebugEnabled()) {
 			logger.debug("DataBinder requires binding of required fields [" +
@@ -473,6 +483,7 @@ public class DataBinder implements PropertyEditorRegistry, TypeConverter {
 	 * Return the fields that are required for each binding process.
 	 * @return array of field names
 	 */
+	@Nullable
 	public String[] getRequiredFields() {
 		return this.requiredFields;
 	}
@@ -515,14 +526,15 @@ public class DataBinder implements PropertyEditorRegistry, TypeConverter {
 	 * @see #addValidators(Validator...)
 	 * @see #replaceValidators(Validator...)
 	 */
-	public void setValidator(Validator validator) {
+	public void setValidator(@Nullable Validator validator) {
 		assertValidators(validator);
 		this.validators.clear();
-		this.validators.add(validator);
+		if (validator != null) {
+			this.validators.add(validator);
+		}
 	}
 
 	private void assertValidators(Validator... validators) {
-		Assert.notNull(validators, "Validators required");
 		for (Validator validator : validators) {
 			if (validator != null && (getTarget() != null && !validator.supports(getTarget().getClass()))) {
 				throw new IllegalStateException("Invalid target for Validator [" + validator + "]: " + getTarget());

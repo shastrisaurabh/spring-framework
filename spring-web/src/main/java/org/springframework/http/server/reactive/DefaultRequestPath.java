@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.springframework.http.server.reactive;
 
 import java.net.URI;
-import java.nio.charset.Charset;
 import java.util.List;
 
 import org.springframework.lang.Nullable;
@@ -31,28 +31,28 @@ import org.springframework.util.StringUtils;
  */
 class DefaultRequestPath implements RequestPath {
 
-	private final PathSegmentContainer fullPath;
+	private final PathContainer fullPath;
 
-	private final PathSegmentContainer contextPath;
+	private final PathContainer contextPath;
 
-	private final PathSegmentContainer pathWithinApplication;
+	private final PathContainer pathWithinApplication;
 
 
-	DefaultRequestPath(URI uri, String contextPath, Charset charset) {
-		this.fullPath = PathSegmentContainer.parse(uri.getRawPath(), charset);
+	DefaultRequestPath(URI uri, @Nullable String contextPath) {
+		this.fullPath = PathContainer.parseUrlPath(uri.getRawPath());
 		this.contextPath = initContextPath(this.fullPath, contextPath);
 		this.pathWithinApplication = extractPathWithinApplication(this.fullPath, this.contextPath);
 	}
 
-	DefaultRequestPath(RequestPath requestPath, String contextPath) {
+	DefaultRequestPath(RequestPath requestPath, @Nullable String contextPath) {
 		this.fullPath = requestPath;
 		this.contextPath = initContextPath(this.fullPath, contextPath);
 		this.pathWithinApplication = extractPathWithinApplication(this.fullPath, this.contextPath);
 	}
 
-	private static PathSegmentContainer initContextPath(PathSegmentContainer path, String contextPath) {
+	private static PathContainer initContextPath(PathContainer path, @Nullable String contextPath) {
 		if (!StringUtils.hasText(contextPath) || "/".equals(contextPath)) {
-			return DefaultPathSegmentContainer.EMPTY_PATH;
+			return PathContainer.parseUrlPath("");
 		}
 
 		Assert.isTrue(contextPath.startsWith("/") && !contextPath.endsWith("/") &&
@@ -61,13 +61,11 @@ class DefaultRequestPath implements RequestPath {
 		int length = contextPath.length();
 		int counter = 0;
 
-		for (int i=0; i < path.pathSegments().size(); i++) {
-			PathSegment pathSegment = path.pathSegments().get(i);
-			counter += 1; // for slash separators
-			counter += pathSegment.value().length();
-			counter += pathSegment.semicolonContent().length();
+		for (int i=0; i < path.elements().size(); i++) {
+			PathContainer.Element element = path.elements().get(i);
+			counter += element.value().length();
 			if (length == counter) {
-				return DefaultPathSegmentContainer.subPath(path, 0, i + 1);
+				return path.subPath(0, i + 1);
 			}
 		}
 
@@ -76,20 +74,12 @@ class DefaultRequestPath implements RequestPath {
 				" given path='" + path.value() + "'");
 	}
 
-	private static PathSegmentContainer extractPathWithinApplication(PathSegmentContainer fullPath,
-			PathSegmentContainer contextPath) {
-
-		return PathSegmentContainer.subPath(fullPath, contextPath.pathSegments().size());
+	private static PathContainer extractPathWithinApplication(PathContainer fullPath, PathContainer contextPath) {
+		return fullPath.subPath(contextPath.elements().size());
 	}
 
 
-	// PathSegmentContainer methods..
-
-
-	@Override
-	public boolean isEmpty() {
-		return this.contextPath.isEmpty() && this.pathWithinApplication.isEmpty();
-	}
+	// PathContainer methods..
 
 	@Override
 	public String value() {
@@ -97,31 +87,20 @@ class DefaultRequestPath implements RequestPath {
 	}
 
 	@Override
-	public boolean isAbsolute() {
-		return !this.contextPath.isEmpty() && this.contextPath.isAbsolute() ||
-				this.pathWithinApplication.isAbsolute();
-	}
-
-	@Override
-	public List<PathSegment> pathSegments() {
-		return this.fullPath.pathSegments();
-	}
-
-	@Override
-	public boolean hasTrailingSlash() {
-		return this.pathWithinApplication.hasTrailingSlash();
+	public List<Element> elements() {
+		return this.fullPath.elements();
 	}
 
 
 	// RequestPath methods..
 
 	@Override
-	public PathSegmentContainer contextPath() {
+	public PathContainer contextPath() {
 		return this.contextPath;
 	}
 
 	@Override
-	public PathSegmentContainer pathWithinApplication() {
+	public PathContainer pathWithinApplication() {
 		return this.pathWithinApplication;
 	}
 

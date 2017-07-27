@@ -55,6 +55,7 @@ import org.springframework.util.Assert;
  */
 public abstract class HibernateDaoSupport extends DaoSupport {
 
+	@Nullable
 	private HibernateTemplate hibernateTemplate;
 
 
@@ -96,7 +97,7 @@ public abstract class HibernateDaoSupport extends DaoSupport {
 	 * as an alternative to specifying a SessionFactory.
 	 * @see #setSessionFactory
 	 */
-	public final void setHibernateTemplate(HibernateTemplate hibernateTemplate) {
+	public final void setHibernateTemplate(@Nullable HibernateTemplate hibernateTemplate) {
 		this.hibernateTemplate = hibernateTemplate;
 	}
 
@@ -110,6 +111,7 @@ public abstract class HibernateDaoSupport extends DaoSupport {
 	 * {@code new HibernateTemplate(getSessionFactory())}, in which case
 	 * you're allowed to customize the settings on the resulting instance.
 	 */
+	@Nullable
 	public final HibernateTemplate getHibernateTemplate() {
 	  return this.hibernateTemplate;
 	}

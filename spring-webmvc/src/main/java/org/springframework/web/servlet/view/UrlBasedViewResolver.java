@@ -102,31 +102,39 @@ public class UrlBasedViewResolver extends AbstractCachingViewResolver implements
 	public static final String FORWARD_URL_PREFIX = "forward:";
 
 
+	@Nullable
 	private Class<?> viewClass;
 
 	private String prefix = "";
 
 	private String suffix = "";
 
+	@Nullable
 	private String contentType;
 
 	private boolean redirectContextRelative = true;
 
 	private boolean redirectHttp10Compatible = true;
 
+	@Nullable
 	private String[] redirectHosts;
 
+	@Nullable
 	private String requestContextAttribute;
 
 	/** Map of static attributes, keyed by attribute name (String) */
 	private final Map<String, Object> staticAttributes = new HashMap<>();
 
+	@Nullable
 	private Boolean exposePathVariables;
 
+	@Nullable
 	private Boolean exposeContextBeansAsAttributes;
 
+	@Nullable
 	private String[] exposedContextBeanNames;
 
+	@Nullable
 	private String[] viewNames;
 
 	private int order = Integer.MAX_VALUE;
@@ -138,8 +146,8 @@ public class UrlBasedViewResolver extends AbstractCachingViewResolver implements
 	 * (by default, AbstractUrlBasedView)
 	 * @see AbstractUrlBasedView
 	 */
-	public void setViewClass(Class<?> viewClass) {
-		if (!requiredViewClass().isAssignableFrom(viewClass)) {
+	public void setViewClass(@Nullable Class<?> viewClass) {
+		if (viewClass != null && !requiredViewClass().isAssignableFrom(viewClass)) {
 			throw new IllegalArgumentException("Given view class [" + viewClass.getName() +
 					"] is not of type [" + requiredViewClass().getName() + "]");
 		}
@@ -196,7 +204,7 @@ public class UrlBasedViewResolver extends AbstractCachingViewResolver implements
 	 * <p>May be ignored by view classes if the view itself is assumed
 	 * to set the content type, e.g. in case of JSPs.
 	 */
-	public void setContentType(String contentType) {
+	public void setContentType(@Nullable String contentType) {
 		this.contentType = contentType;
 	}
 
@@ -268,7 +276,7 @@ public class UrlBasedViewResolver extends AbstractCachingViewResolver implements
 	 * @param redirectHosts one or more application hosts
 	 * @since 4.3
 	 */
-	public void setRedirectHosts(String... redirectHosts) {
+	public void setRedirectHosts(@Nullable String... redirectHosts) {
 		this.redirectHosts = redirectHosts;
 	}
 
@@ -276,6 +284,7 @@ public class UrlBasedViewResolver extends AbstractCachingViewResolver implements
 	 * Return the configured application hosts for redirect purposes.
 	 * @since 4.3
 	 */
+	@Nullable
 	public String[] getRedirectHosts() {
 		return this.redirectHosts;
 	}
@@ -285,7 +294,7 @@ public class UrlBasedViewResolver extends AbstractCachingViewResolver implements
 	 * @param requestContextAttribute name of the RequestContext attribute
 	 * @see AbstractView#setRequestContextAttribute
 	 */
-	public void setRequestContextAttribute(String requestContextAttribute) {
+	public void setRequestContextAttribute(@Nullable String requestContextAttribute) {
 		this.requestContextAttribute = requestContextAttribute;
 	}
 
@@ -384,7 +393,7 @@ public class UrlBasedViewResolver extends AbstractCachingViewResolver implements
 	 * attributes.
 	 * @see AbstractView#setExposedContextBeanNames
 	 */
-	public void setExposedContextBeanNames(String... exposedContextBeanNames) {
+	public void setExposedContextBeanNames(@Nullable String... exposedContextBeanNames) {
 		this.exposedContextBeanNames = exposedContextBeanNames;
 	}
 
@@ -400,7 +409,7 @@ public class UrlBasedViewResolver extends AbstractCachingViewResolver implements
 	 * view name 'myReport'.
 	 * @see #canHandle
 	 */
-	public void setViewNames(String... viewNames) {
+	public void setViewNames(@Nullable String... viewNames) {
 		this.viewNames = viewNames;
 	}
 
@@ -467,7 +476,10 @@ public class UrlBasedViewResolver extends AbstractCachingViewResolver implements
 		if (viewName.startsWith(REDIRECT_URL_PREFIX)) {
 			String redirectUrl = viewName.substring(REDIRECT_URL_PREFIX.length());
 			RedirectView view = new RedirectView(redirectUrl, isRedirectContextRelative(), isRedirectHttp10Compatible());
-			view.setHosts(getRedirectHosts());
+			String[] hosts = getRedirectHosts();
+			if (hosts != null) {
+				view.setHosts(hosts);
+			}
 			return applyLifecycleMethods(viewName, view);
 		}
 		// Check for special "forward:" prefix.

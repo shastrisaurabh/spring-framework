@@ -38,6 +38,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.expression.EvaluationContext;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
+import org.springframework.util.ClassUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.ReflectionUtils;
 import org.springframework.util.StringUtils;
@@ -71,14 +72,17 @@ public class ApplicationListenerMethodAdapter implements GenericApplicationListe
 
 	private final List<ResolvableType> declaredEventTypes;
 
+	@Nullable
 	private final String condition;
 
 	private final int order;
 
 	private final AnnotatedElementKey methodKey;
 
+	@Nullable
 	private ApplicationContext applicationContext;
 
+	@Nullable
 	private EventExpressionEvaluator evaluator;
 
 
@@ -88,7 +92,9 @@ public class ApplicationListenerMethodAdapter implements GenericApplicationListe
 		this.targetClass = targetClass;
 		this.bridgedMethod = BridgeMethodResolver.findBridgedMethod(method);
 
-		EventListener ann = AnnotatedElementUtils.findMergedAnnotation(method, EventListener.class);
+		Method targetMethod = ClassUtils.getMostSpecificMethod(method, targetClass);
+		EventListener ann = AnnotatedElementUtils.findMergedAnnotation(targetMethod, EventListener.class);
+
 		this.declaredEventTypes = resolveDeclaredEventTypes(method, ann);
 		this.condition = (ann != null ? ann.condition() : null);
 		this.order = resolveOrder(method);
@@ -291,6 +297,7 @@ public class ApplicationListenerMethodAdapter implements GenericApplicationListe
 	 * annotation or any matching attribute on a composed annotation that
 	 * is meta-annotated with {@code @EventListener}.
 	 */
+	@Nullable
 	protected String getCondition() {
 		return this.condition;
 	}

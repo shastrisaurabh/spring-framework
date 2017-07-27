@@ -19,7 +19,7 @@ package org.springframework.web.reactive.result.condition;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -27,12 +27,10 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
+import org.springframework.http.server.reactive.PathContainer;
 import org.springframework.lang.Nullable;
-import org.springframework.util.StringUtils;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.util.pattern.PathPattern;
-import org.springframework.web.util.pattern.PathPatternComparator;
-import org.springframework.web.util.pattern.PathPatternParser;
 
 /**
  * A logical disjunction (' || ') request condition that matches a request
@@ -44,64 +42,43 @@ import org.springframework.web.util.pattern.PathPatternParser;
  */
 public final class PatternsRequestCondition extends AbstractRequestCondition<PatternsRequestCondition> {
 
-	private final List<PathPattern> patterns;
+	private final SortedSet<PathPattern> patterns;
 
-	private final PathPatternParser parser;
 
 	/**
 	 * Creates a new instance with the given URL patterns.
-	 * Each pattern is prepended with "/" if not already.
 	 * @param patterns 0 or more URL patterns; if 0 the condition will match to every request.
 	 */
-	public PatternsRequestCondition(String... patterns) {
-		this(asList(patterns), null);
+	public PatternsRequestCondition(PathPattern... patterns) {
+		this(Arrays.asList(patterns));
 	}
 
 	/**
-	 * Creates a new instance with the given URL patterns.
-	 * Each pattern that is not empty and does not start with "/" is pre-pended with "/".
-	 * @param patterns the URL patterns to use; if 0, the condition will match to every request.
-	 * @param patternParser for parsing string patterns
+	 * Creates a new instance with the given {@code Stream} of URL patterns.
 	 */
-	public PatternsRequestCondition(String[] patterns, PathPatternParser patternParser) {
-
-		this(asList(patterns), patternParser);
+	public PatternsRequestCondition(List<PathPattern> patterns) {
+		this(toSortedSet(patterns));
 	}
 
-	/**
-	 * Private constructor accepting a collection of raw patterns.
-	 */
-	private PatternsRequestCondition(Collection<String> patterns, PathPatternParser patternParser) {
-		this.parser = patternParser != null ? patternParser : new PathPatternParser();
-		this.patterns = new ArrayList<>();
-		patterns.forEach(pattern -> {
-			if (StringUtils.hasText(pattern) && !pattern.startsWith("/")) {
-				pattern = "/" + pattern;
-			}
-			this.patterns.add(this.parser.parse(pattern));
-		});
+	private static SortedSet<PathPattern> toSortedSet(Collection<PathPattern> patterns) {
+		TreeSet<PathPattern> sorted = new TreeSet<>(getPatternComparator());
+		sorted.addAll(patterns);
+		return sorted;
 	}
 
-	/**
-	 * Private constructor accepting a list of path patterns.
-	 */
-	private PatternsRequestCondition(List<PathPattern> patterns, PathPatternParser patternParser) {
+	private PatternsRequestCondition(SortedSet<PathPattern> patterns) {
 		this.patterns = patterns;
-		this.parser = patternParser;
 	}
 
-
-	private static List<String> asList(String... patterns) {
-		return (patterns != null ? Arrays.asList(patterns) : Collections.emptyList());
+	private static Comparator<PathPattern> getPatternComparator() {
+		return (p1, p2) -> {
+			int index = p1.compareTo(p2);
+			return (index != 0 ? index : p1.getPatternString().compareTo(p2.getPatternString()));
+		};
 	}
 
 	public Set<PathPattern> getPatterns() {
-		return new TreeSet<>(this.patterns);
-	}
-
-	public Set<String> getPatternStrings() {
-		return this.patterns.stream()
-				.map(PathPattern::toString).collect(Collectors.toSet());
+		return this.patterns;
 	}
 
 	@Override
@@ -119,7 +96,7 @@ public final class PatternsRequestCondition extends AbstractRequestCondition<Pat
 	 * the "other" instance as follows:
 	 * <ul>
 	 * <li>If there are patterns in both instances, combine the patterns in "this" with
-	 * the patterns in "other" using {@link PathPattern#combine(String)}.
+	 * the patterns in "other" using {@link PathPattern#combine(PathPattern)}.
 	 * <li>If only one instance has patterns, use them.
 	 * <li>If neither instance has patterns, use an empty String (i.e. "").
 	 * </ul>
@@ -130,8 +107,7 @@ public final class PatternsRequestCondition extends AbstractRequestCondition<Pat
 		if (!this.patterns.isEmpty() && !other.patterns.isEmpty()) {
 			for (PathPattern pattern1 : this.patterns) {
 				for (PathPattern pattern2 : other.patterns) {
-					String combinedPattern = pattern1.combine(pattern2.getPatternString());
-					combined.add(this.parser.parse(combinedPattern));
+					combined.add(pattern1.combine(pattern2));
 				}
 			}
 		}
@@ -141,17 +117,12 @@ public final class PatternsRequestCondition extends AbstractRequestCondition<Pat
 		else if (!other.patterns.isEmpty()) {
 			combined.addAll(other.patterns);
 		}
-		else {
-			combined.add(this.parser.parse(""));
-		}
-
-		return new PatternsRequestCondition(combined, this.parser);
+		return new PatternsRequestCondition(combined);
 	}
 
 	/**
 	 * Checks if any of the patterns match the given request and returns an instance
-	 * that is guaranteed to contain matching patterns, sorted with a
-	 * {@link PathPatternComparator}.
+	 * that is guaranteed to contain matching patterns, sorted.
 	 * @param exchange the current exchange
 	 * @return the same instance if the condition contains no patterns;
 	 * or a new condition with sorted matching patterns;
@@ -163,10 +134,9 @@ public final class PatternsRequestCondition extends AbstractRequestCondition<Pat
 		if (this.patterns.isEmpty()) {
 			return this;
 		}
-
-		String lookupPath = exchange.getRequest().getPath().pathWithinApplication().value();
-		SortedSet<PathPattern> matches = getMatchingPatterns(lookupPath);
-		return matches.isEmpty() ? null : new PatternsRequestCondition(new ArrayList<>(matches), this.parser);
+		SortedSet<PathPattern> matches = getMatchingPatterns(exchange);
+		return matches.isEmpty() ? null :
+				new PatternsRequestCondition(matches);
 	}
 
 	/**
@@ -175,20 +145,19 @@ public final class PatternsRequestCondition extends AbstractRequestCondition<Pat
 	 * {@link #getMatchingCondition(ServerWebExchange)}.
 	 * This method is provided as an alternative to be used if no request is available
 	 * (e.g. introspection, tooling, etc).
-	 * @param lookupPath the lookup path to match to existing patterns
+	 * @param exchange the current exchange
 	 * @return a sorted set of matching patterns sorted with the closest match first
 	 */
-	public SortedSet<PathPattern> getMatchingPatterns(String lookupPath) {
+	private SortedSet<PathPattern> getMatchingPatterns(ServerWebExchange exchange) {
+		PathContainer lookupPath = exchange.getRequest().getPath().pathWithinApplication();
 		return patterns.stream()
 				.filter(pattern -> pattern.matches(lookupPath))
-				.collect(Collectors.toCollection(() ->
-						new TreeSet<>(new PathPatternComparator(lookupPath))));
+				.collect(Collectors.toCollection(TreeSet::new));
 	}
 
 	/**
 	 * Compare the two conditions based on the URL patterns they contain.
-	 * Patterns are compared one at a time, from top to bottom via
-	 * {@link PathPatternComparator}. If all compared
+	 * Patterns are compared one at a time, from top to bottom. If all compared
 	 * patterns match equally, but one instance has more patterns, it is
 	 * considered a closer match.
 	 * <p>It is assumed that both instances have been obtained via
@@ -198,14 +167,10 @@ public final class PatternsRequestCondition extends AbstractRequestCondition<Pat
 	 */
 	@Override
 	public int compareTo(PatternsRequestCondition other, ServerWebExchange exchange) {
-		String lookupPath = exchange.getRequest().getPath().pathWithinApplication().value();
-		PathPatternComparator comparator = new PathPatternComparator(lookupPath);
-		Iterator<PathPattern> iterator = this.patterns.stream()
-				.sorted(comparator).collect(Collectors.toList()).iterator();
-		Iterator<PathPattern> iteratorOther = other.getPatterns().stream()
-				.sorted(comparator).collect(Collectors.toList()).iterator();
+		Iterator<PathPattern> iterator = this.patterns.iterator();
+		Iterator<PathPattern> iteratorOther = other.getPatterns().iterator();
 		while (iterator.hasNext() && iteratorOther.hasNext()) {
-			int result = comparator.compare(iterator.next(), iteratorOther.next());
+			int result = iterator.next().compareTo(iteratorOther.next());
 			if (result != 0) {
 				return result;
 			}

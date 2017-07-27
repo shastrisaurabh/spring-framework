@@ -129,12 +129,16 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 
 	protected final Log logger = LogFactory.getLog(getClass());
 
+	@Nullable
 	private String transactionManagerBeanName;
 
+	@Nullable
 	private PlatformTransactionManager transactionManager;
 
+	@Nullable
 	private TransactionAttributeSource transactionAttributeSource;
 
+	@Nullable
 	private BeanFactory beanFactory;
 
 	private final ConcurrentMap<Object, PlatformTransactionManager> transactionManagerCache =
@@ -144,13 +148,14 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 	/**
 	 * Specify the name of the default transaction manager bean.
 	 */
-	public void setTransactionManagerBeanName(String transactionManagerBeanName) {
+	public void setTransactionManagerBeanName(@Nullable String transactionManagerBeanName) {
 		this.transactionManagerBeanName = transactionManagerBeanName;
 	}
 
 	/**
 	 * Return the name of the default transaction manager bean.
 	 */
+	@Nullable
 	protected final String getTransactionManagerBeanName() {
 		return this.transactionManagerBeanName;
 	}
@@ -162,7 +167,7 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 	 * default transaction manager bean has not been specified.
 	 * @see #setTransactionManagerBeanName
 	 */
-	public void setTransactionManager(PlatformTransactionManager transactionManager) {
+	public void setTransactionManager(@Nullable PlatformTransactionManager transactionManager) {
 		this.transactionManager = transactionManager;
 	}
 
@@ -213,7 +218,7 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 	 * @see NameMatchTransactionAttributeSource
 	 * @see org.springframework.transaction.annotation.AnnotationTransactionAttributeSource
 	 */
-	public void setTransactionAttributeSource(TransactionAttributeSource transactionAttributeSource) {
+	public void setTransactionAttributeSource(@Nullable TransactionAttributeSource transactionAttributeSource) {
 		this.transactionAttributeSource = transactionAttributeSource;
 	}
 
@@ -229,13 +234,14 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 	 * Set the BeanFactory to use for retrieving PlatformTransactionManager beans.
 	 */
 	@Override
-	public void setBeanFactory(BeanFactory beanFactory) {
+	public void setBeanFactory(@Nullable BeanFactory beanFactory) {
 		this.beanFactory = beanFactory;
 	}
 
 	/**
 	 * Return the BeanFactory to use for retrieving PlatformTransactionManager beans.
 	 */
+	@Nullable
 	protected final BeanFactory getBeanFactory() {
 		return this.beanFactory;
 	}
@@ -361,10 +367,10 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 
 		String qualifier = txAttr.getQualifier();
 		if (StringUtils.hasText(qualifier)) {
-			return determineQualifiedTransactionManager(qualifier);
+			return determineQualifiedTransactionManager(this.beanFactory, qualifier);
 		}
 		else if (StringUtils.hasText(this.transactionManagerBeanName)) {
-			return determineQualifiedTransactionManager(this.transactionManagerBeanName);
+			return determineQualifiedTransactionManager(this.beanFactory, this.transactionManagerBeanName);
 		}
 		else {
 			PlatformTransactionManager defaultTransactionManager = getTransactionManager();
@@ -380,11 +386,11 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 		}
 	}
 
-	private PlatformTransactionManager determineQualifiedTransactionManager(String qualifier) {
+	private PlatformTransactionManager determineQualifiedTransactionManager(BeanFactory beanFactory, String qualifier) {
 		PlatformTransactionManager txManager = this.transactionManagerCache.get(qualifier);
 		if (txManager == null) {
 			txManager = BeanFactoryAnnotationUtils.qualifiedBeanOfType(
-					this.beanFactory, PlatformTransactionManager.class, qualifier);
+					beanFactory, PlatformTransactionManager.class, qualifier);
 			this.transactionManagerCache.putIfAbsent(qualifier, txManager);
 		}
 		return txManager;
@@ -505,7 +511,7 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 	 * @param txInfo information about the current transaction
 	 */
 	protected void commitTransactionAfterReturning(@Nullable TransactionInfo txInfo) {
-		if (txInfo != null && txInfo.hasTransaction()) {
+		if (txInfo != null && txInfo.getTransactionStatus() != null) {
 			if (logger.isTraceEnabled()) {
 				logger.trace("Completing transaction for [" + txInfo.getJoinpointIdentification() + "]");
 			}
@@ -520,7 +526,7 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 	 * @param ex throwable encountered
 	 */
 	protected void completeTransactionAfterThrowing(@Nullable TransactionInfo txInfo, Throwable ex) {
-		if (txInfo != null && txInfo.hasTransaction()) {
+		if (txInfo != null && txInfo.getTransactionStatus() != null) {
 			if (logger.isTraceEnabled()) {
 				logger.trace("Completing transaction for [" + txInfo.getJoinpointIdentification() +
 						"] after exception: " + ex);
@@ -584,14 +590,18 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 	 */
 	protected final class TransactionInfo {
 
+		@Nullable
 		private final PlatformTransactionManager transactionManager;
 
+		@Nullable
 		private final TransactionAttribute transactionAttribute;
 
 		private final String joinpointIdentification;
 
+		@Nullable
 		private TransactionStatus transactionStatus;
 
+		@Nullable
 		private TransactionInfo oldTransactionInfo;
 
 		public TransactionInfo(@Nullable PlatformTransactionManager transactionManager,
@@ -624,6 +634,7 @@ public abstract class TransactionAspectSupport implements BeanFactoryAware, Init
 			this.transactionStatus = status;
 		}
 
+		@Nullable
 		public TransactionStatus getTransactionStatus() {
 			return this.transactionStatus;
 		}

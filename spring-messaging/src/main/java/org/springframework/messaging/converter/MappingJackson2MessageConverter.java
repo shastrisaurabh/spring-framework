@@ -64,6 +64,7 @@ public class MappingJackson2MessageConverter extends AbstractMessageConverter {
 
 	private ObjectMapper objectMapper;
 
+	@Nullable
 	private Boolean prettyPrint;
 
 
@@ -73,7 +74,7 @@ public class MappingJackson2MessageConverter extends AbstractMessageConverter {
 	 */
 	public MappingJackson2MessageConverter() {
 		super(new MimeType("application", "json", StandardCharsets.UTF_8));
-		initObjectMapper();
+		this.objectMapper = initObjectMapper();
 	}
 
 	/**
@@ -84,14 +85,15 @@ public class MappingJackson2MessageConverter extends AbstractMessageConverter {
 	 */
 	public MappingJackson2MessageConverter(MimeType... supportedMimeTypes) {
 		super(Arrays.asList(supportedMimeTypes));
-		initObjectMapper();
+		this.objectMapper = initObjectMapper();
 	}
 
 
-	private void initObjectMapper() {
-		this.objectMapper = new ObjectMapper();
-		this.objectMapper.configure(MapperFeature.DEFAULT_VIEW_INCLUSION, false);
-		this.objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+	private ObjectMapper initObjectMapper() {
+		ObjectMapper objectMapper = new ObjectMapper();
+		objectMapper.configure(MapperFeature.DEFAULT_VIEW_INCLUSION, false);
+		objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+		return objectMapper;
 	}
 
 	/**
@@ -144,9 +146,6 @@ public class MappingJackson2MessageConverter extends AbstractMessageConverter {
 			return false;
 		}
 		JavaType javaType = this.objectMapper.constructType(targetClass);
-		if (!logger.isWarnEnabled()) {
-			return this.objectMapper.canDeserialize(javaType);
-		}
 		AtomicReference<Throwable> causeRef = new AtomicReference<>();
 		if (this.objectMapper.canDeserialize(javaType, causeRef)) {
 			return true;
@@ -159,9 +158,6 @@ public class MappingJackson2MessageConverter extends AbstractMessageConverter {
 	protected boolean canConvertTo(Object payload, @Nullable MessageHeaders headers) {
 		if (!supportsMimeType(headers)) {
 			return false;
-		}
-		if (!logger.isWarnEnabled()) {
-			return this.objectMapper.canSerialize(payload.getClass());
 		}
 		AtomicReference<Throwable> causeRef = new AtomicReference<>();
 		if (this.objectMapper.canSerialize(payload.getClass(), causeRef)) {

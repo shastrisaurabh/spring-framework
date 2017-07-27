@@ -87,12 +87,16 @@ import org.springframework.web.servlet.view.AbstractTemplateView;
  */
 public class FreeMarkerView extends AbstractTemplateView {
 
+	@Nullable
 	private String encoding;
 
+	@Nullable
 	private Configuration configuration;
 
+	@Nullable
 	private TaglibFactory taglibFactory;
 
+	@Nullable
 	private ServletContextHashModel servletContextHashModel;
 
 
@@ -102,7 +106,7 @@ public class FreeMarkerView extends AbstractTemplateView {
 	 * <p>Specify the encoding in the FreeMarker Configuration rather than per
 	 * template if all your templates share a common encoding.
 	 */
-	public void setEncoding(String encoding) {
+	public void setEncoding(@Nullable String encoding) {
 		this.encoding = encoding;
 	}
 
@@ -123,7 +127,7 @@ public class FreeMarkerView extends AbstractTemplateView {
 	 * in terms of memory and initial CPU usage. In production it is recommended that you use
 	 * a {@link FreeMarkerConfig} which exposes a single shared {@link TaglibFactory}.
 	 */
-	public void setConfiguration(Configuration configuration) {
+	public void setConfiguration(@Nullable Configuration configuration) {
 		this.configuration = configuration;
 	}
 

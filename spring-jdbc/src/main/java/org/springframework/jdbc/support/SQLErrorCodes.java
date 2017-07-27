@@ -35,6 +35,7 @@ import org.springframework.util.StringUtils;
  */
 public class SQLErrorCodes {
 
+	@Nullable
 	private String[] databaseProductNames;
 
 	private boolean useSqlStateForTranslation = false;
@@ -59,8 +60,10 @@ public class SQLErrorCodes {
 
 	private String[] cannotSerializeTransactionCodes = new String[0];
 
+	@Nullable
 	private CustomSQLErrorCodesTranslation[] customTranslations;
 
+	@Nullable
 	private SQLExceptionTranslator customSqlExceptionTranslator;
 
 
@@ -68,7 +71,7 @@ public class SQLErrorCodes {
 	 * Set this property if the database name contains spaces,
 	 * in which case we can not use the bean name for lookup.
 	 */
-	public void setDatabaseProductName(String databaseProductName) {
+	public void setDatabaseProductName(@Nullable String databaseProductName) {
 		this.databaseProductNames = new String[] {databaseProductName};
 	}
 
@@ -82,10 +85,11 @@ public class SQLErrorCodes {
 	 * Set this property to specify multiple database names that contains spaces,
 	 * in which case we can not use bean names for lookup.
 	 */
-	public void setDatabaseProductNames(String... databaseProductNames) {
+	public void setDatabaseProductNames(@Nullable String... databaseProductNames) {
 		this.databaseProductNames = databaseProductNames;
 	}
 
+	@Nullable
 	public String[] getDatabaseProductNames() {
 		return this.databaseProductNames;
 	}
@@ -206,7 +210,7 @@ public class SQLErrorCodes {
 		}
 	}
 
-	public void setCustomSqlExceptionTranslator(SQLExceptionTranslator customSqlExceptionTranslator) {
+	public void setCustomSqlExceptionTranslator(@Nullable SQLExceptionTranslator customSqlExceptionTranslator) {
 		this.customSqlExceptionTranslator = customSqlExceptionTranslator;
 	}
 

@@ -56,16 +56,22 @@ import org.springframework.util.CollectionUtils;
  */
 public class ScheduledTaskRegistrar implements InitializingBean, DisposableBean {
 
+	@Nullable
 	private TaskScheduler taskScheduler;
 
+	@Nullable
 	private ScheduledExecutorService localExecutor;
 
+	@Nullable
 	private List<TriggerTask> triggerTasks;
 
+	@Nullable
 	private List<CronTask> cronTasks;
 
+	@Nullable
 	private List<IntervalTask> fixedRateTasks;
 
+	@Nullable
 	private List<IntervalTask> fixedDelayTasks;
 
 	private final Map<Task, ScheduledTask> unresolvedTasks = new HashMap<>(16);
@@ -86,9 +92,11 @@ public class ScheduledTaskRegistrar implements InitializingBean, DisposableBean 
 	 * {@link java.util.concurrent.ScheduledExecutorService} to be wrapped as a
 	 * {@code TaskScheduler}.
 	 */
-	public void setScheduler(Object scheduler) {
-		Assert.notNull(scheduler, "Scheduler object must not be null");
-		if (scheduler instanceof TaskScheduler) {
+	public void setScheduler(@Nullable Object scheduler) {
+		if (scheduler == null) {
+			this.taskScheduler = null;
+		}
+		else if (scheduler instanceof TaskScheduler) {
 			this.taskScheduler = (TaskScheduler) scheduler;
 		}
 		else if (scheduler instanceof ScheduledExecutorService) {

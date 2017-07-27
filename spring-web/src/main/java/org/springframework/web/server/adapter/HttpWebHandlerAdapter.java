@@ -30,12 +30,13 @@ import org.springframework.http.codec.ServerCodecConfigurer;
 import org.springframework.http.server.reactive.HttpHandler;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.http.server.reactive.ServerHttpResponse;
+import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
-import org.springframework.web.server.i18n.LocaleContextResolver;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebHandler;
 import org.springframework.web.server.handler.WebHandlerDecorator;
 import org.springframework.web.server.i18n.AcceptHeaderLocaleContextResolver;
+import org.springframework.web.server.i18n.LocaleContextResolver;
 import org.springframework.web.server.session.DefaultWebSessionManager;
 import org.springframework.web.server.session.WebSessionManager;
 
@@ -83,8 +84,10 @@ public class HttpWebHandlerAdapter extends WebHandlerDecorator implements HttpHa
 
 	private WebSessionManager sessionManager = new DefaultWebSessionManager();
 
+	@Nullable
 	private ServerCodecConfigurer codecConfigurer;
 
+	@Nullable
 	private LocaleContextResolver localeContextResolver;
 
 
@@ -181,8 +184,10 @@ public class HttpWebHandlerAdapter extends WebHandlerDecorator implements HttpHa
 	}
 
 	private boolean indicatesDisconnectedClient(Throwable ex)  {
-		return ("Broken pipe".equalsIgnoreCase(NestedExceptionUtils.getMostSpecificCause(ex).getMessage()) ||
-				DISCONNECTED_CLIENT_EXCEPTIONS.contains(ex.getClass().getSimpleName()));
+		String message = NestedExceptionUtils.getMostSpecificCause(ex).getMessage();
+		message = (message != null ? message.toLowerCase() : "");
+		String className = ex.getClass().getSimpleName();
+		return (message.contains("broken pipe") || DISCONNECTED_CLIENT_EXCEPTIONS.contains(className));
 	}
 
 }

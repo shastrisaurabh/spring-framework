@@ -65,18 +65,25 @@ public class CorsConfiguration {
 	}
 
 
+	@Nullable
 	private List<String> allowedOrigins;
 
+	@Nullable
 	private List<String> allowedMethods;
 
+	@Nullable
 	private List<HttpMethod> resolvedMethods = DEFAULT_METHODS;
 
+	@Nullable
 	private List<String> allowedHeaders;
 
+	@Nullable
 	private List<String> exposedHeaders;
 
+	@Nullable
 	private Boolean allowCredentials;
 
+	@Nullable
 	private Long maxAge;
 
 
@@ -271,7 +278,7 @@ public class CorsConfiguration {
 	 * Whether user credentials are supported.
 	 * <p>By default this is not set (i.e. user credentials are not supported).
 	 */
-	public void setAllowCredentials(Boolean allowCredentials) {
+	public void setAllowCredentials(@Nullable Boolean allowCredentials) {
 		this.allowCredentials = allowCredentials;
 	}
 
@@ -289,7 +296,7 @@ public class CorsConfiguration {
 	 * can be cached by clients.
 	 * <p>By default this is not set.
 	 */
-	public void setMaxAge(Long maxAge) {
+	public void setMaxAge(@Nullable Long maxAge) {
 		this.maxAge = maxAge;
 	}
 

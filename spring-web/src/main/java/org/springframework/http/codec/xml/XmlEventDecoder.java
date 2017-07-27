@@ -44,6 +44,7 @@ import org.springframework.lang.Nullable;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.MimeType;
 import org.springframework.util.MimeTypeUtils;
+import org.springframework.util.xml.StaxUtils;
 
 /**
  * Decodes a {@link DataBuffer} stream into a stream of {@link XMLEvent}s.
@@ -77,7 +78,7 @@ import org.springframework.util.MimeTypeUtils;
  */
 public class XmlEventDecoder extends AbstractDecoder<XMLEvent> {
 
-	private static final XMLInputFactory inputFactory = XMLInputFactory.newInstance();
+	private static final XMLInputFactory inputFactory = StaxUtils.createDefensiveInputFactory();
 
 	private static final boolean aaltoPresent = ClassUtils.isPresent(
 			"com.fasterxml.aalto.AsyncXMLStreamReader", XmlEventDecoder.class.getClassLoader());
@@ -97,7 +98,9 @@ public class XmlEventDecoder extends AbstractDecoder<XMLEvent> {
 
 		Flux<DataBuffer> flux = Flux.from(inputStream);
 		if (useAalto) {
-			return flux.flatMap(new AaltoDataBufferToXmlEvent());
+			AaltoDataBufferToXmlEvent aaltoMapper = new AaltoDataBufferToXmlEvent();
+			return flux.flatMap(aaltoMapper)
+					.doFinally(signalType -> aaltoMapper.endOfInput());
 		}
 		else {
 			Mono<DataBuffer> singleBuffer = flux.reduce(DataBuffer::write);
@@ -106,13 +109,13 @@ public class XmlEventDecoder extends AbstractDecoder<XMLEvent> {
 						try {
 							InputStream is = dataBuffer.asInputStream();
 							Iterator eventReader = inputFactory.createXMLEventReader(is);
-							return Flux.fromIterable((Iterable<XMLEvent>) () -> eventReader);
+							return Flux.fromIterable((Iterable<XMLEvent>) () -> eventReader)
+									.doFinally(t -> {
+										DataBufferUtils.release(dataBuffer);
+									});
 						}
 						catch (XMLStreamException ex) {
 							return Mono.error(ex);
-						}
-						finally {
-							DataBufferUtils.release(dataBuffer);
 						}
 					});
 		}
@@ -157,6 +160,10 @@ public class XmlEventDecoder extends AbstractDecoder<XMLEvent> {
 			finally {
 				DataBufferUtils.release(dataBuffer);
 			}
+		}
+
+		public void endOfInput() {
+			this.streamReader.getInputFeeder().endOfInput();
 		}
 	}
 

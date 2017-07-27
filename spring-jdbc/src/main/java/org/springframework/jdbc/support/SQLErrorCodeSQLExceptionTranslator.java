@@ -74,6 +74,7 @@ public class SQLErrorCodeSQLExceptionTranslator extends AbstractFallbackSQLExcep
 
 
 	/** Error codes used by this translator */
+	@Nullable
 	private SQLErrorCodes sqlErrorCodes;
 
 
@@ -151,7 +152,7 @@ public class SQLErrorCodeSQLExceptionTranslator extends AbstractFallbackSQLExcep
 	 * Set custom error codes to be used for translation.
 	 * @param sec custom error codes to use
 	 */
-	public void setSqlErrorCodes(SQLErrorCodes sec) {
+	public void setSqlErrorCodes(@Nullable SQLErrorCodes sec) {
 		this.sqlErrorCodes = sec;
 	}
 
@@ -160,6 +161,7 @@ public class SQLErrorCodeSQLExceptionTranslator extends AbstractFallbackSQLExcep
 	 * Usually determined via a DataSource.
 	 * @see #setDataSource
 	 */
+	@Nullable
 	public SQLErrorCodes getSqlErrorCodes() {
 		return this.sqlErrorCodes;
 	}

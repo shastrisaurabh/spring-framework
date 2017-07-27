@@ -38,17 +38,23 @@ import org.springframework.lang.Nullable;
  */
 public class MethodInvoker {
 
+	@Nullable
 	protected Class<?> targetClass;
 
+	@Nullable
 	private Object targetObject;
 
+	@Nullable
 	private String targetMethod;
 
+	@Nullable
 	private String staticMethod;
 
+	@Nullable
 	private Object[] arguments = new Object[0];
 
 	/** The method we will call */
+	@Nullable
 	private Method methodObject;
 
 
@@ -59,7 +65,7 @@ public class MethodInvoker {
 	 * @see #setTargetObject
 	 * @see #setTargetMethod
 	 */
-	public void setTargetClass(Class<?> targetClass) {
+	public void setTargetClass(@Nullable Class<?> targetClass) {
 		this.targetClass = targetClass;
 	}
 
@@ -100,7 +106,7 @@ public class MethodInvoker {
 	 * @see #setTargetClass
 	 * @see #setTargetObject
 	 */
-	public void setTargetMethod(String targetMethod) {
+	public void setTargetMethod(@Nullable String targetMethod) {
 		this.targetMethod = targetMethod;
 	}
 

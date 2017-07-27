@@ -40,7 +40,8 @@ public abstract class AbstractDestinationResolvingMessagingTemplate<D> extends A
 		DestinationResolvingMessageReceivingOperations<D>,
 		DestinationResolvingMessageRequestReplyOperations<D> {
 
-	private volatile DestinationResolver<D> destinationResolver;
+	@Nullable
+	private DestinationResolver<D> destinationResolver;
 
 
 	/**
@@ -50,14 +51,14 @@ public abstract class AbstractDestinationResolvingMessagingTemplate<D> extends A
 	 * require resolving a destination name will raise an {@link IllegalArgumentException}.
 	 * @param destinationResolver the destination resolver to use
 	 */
-	public void setDestinationResolver(DestinationResolver<D> destinationResolver) {
-		Assert.notNull(destinationResolver, "'destinationResolver' is required");
+	public void setDestinationResolver(@Nullable DestinationResolver<D> destinationResolver) {
 		this.destinationResolver = destinationResolver;
 	}
 
 	/**
 	 * Return the configured destination resolver.
 	 */
+	@Nullable
 	public DestinationResolver<D> getDestinationResolver() {
 		return this.destinationResolver;
 	}
@@ -70,6 +71,7 @@ public abstract class AbstractDestinationResolvingMessagingTemplate<D> extends A
 	}
 
 	protected final D resolveDestination(String destinationName) {
+
 		Assert.state(this.destinationResolver != null, "DestinationResolver is required to resolve destination names");
 		return this.destinationResolver.resolveDestination(destinationName);
 	}

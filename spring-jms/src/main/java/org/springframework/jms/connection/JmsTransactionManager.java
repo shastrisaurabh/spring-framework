@@ -93,6 +93,7 @@ import org.springframework.util.Assert;
 public class JmsTransactionManager extends AbstractPlatformTransactionManager
 		implements ResourceTransactionManager, InitializingBean {
 
+	@Nullable
 	private ConnectionFactory connectionFactory;
 
 
@@ -126,8 +127,8 @@ public class JmsTransactionManager extends AbstractPlatformTransactionManager
 	/**
 	 * Set the JMS ConnectionFactory that this instance should manage transactions for.
 	 */
-	public void setConnectionFactory(ConnectionFactory cf) {
-		if (cf instanceof TransactionAwareConnectionFactoryProxy) {
+	public void setConnectionFactory(@Nullable ConnectionFactory cf) {
+		if (cf != null && cf instanceof TransactionAwareConnectionFactoryProxy) {
 			// If we got a TransactionAwareConnectionFactoryProxy, we need to perform transactions
 			// for its underlying target ConnectionFactory, else JMS access code won't see
 			// properly exposed transactions (i.e. transactions for the target ConnectionFactory).
@@ -327,6 +328,7 @@ public class JmsTransactionManager extends AbstractPlatformTransactionManager
 	 */
 	private static class JmsTransactionObject implements SmartTransactionObject {
 
+		@Nullable
 		private JmsResourceHolder resourceHolder;
 
 		public void setResourceHolder(@Nullable JmsResourceHolder resourceHolder) {
@@ -344,7 +346,7 @@ public class JmsTransactionManager extends AbstractPlatformTransactionManager
 
 		@Override
 		public boolean isRollbackOnly() {
-			return this.resourceHolder.isRollbackOnly();
+			return (this.resourceHolder != null && this.resourceHolder.isRollbackOnly());
 		}
 
 		@Override

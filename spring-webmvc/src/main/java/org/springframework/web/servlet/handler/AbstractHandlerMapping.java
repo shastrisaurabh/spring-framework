@@ -69,6 +69,7 @@ public abstract class AbstractHandlerMapping extends WebApplicationObjectSupport
 
 	private int order = Integer.MAX_VALUE;  // default: same as non-Ordered
 
+	@Nullable
 	private Object defaultHandler;
 
 	private UrlPathHelper urlPathHelper = new UrlPathHelper();
@@ -103,7 +104,7 @@ public abstract class AbstractHandlerMapping extends WebApplicationObjectSupport
 	 * This handler will be returned if no specific mapping was found.
 	 * <p>Default is {@code null}, indicating no default handler.
 	 */
-	public void setDefaultHandler(Object defaultHandler) {
+	public void setDefaultHandler(@Nullable Object defaultHandler) {
 		this.defaultHandler = defaultHandler;
 	}
 
@@ -117,11 +118,8 @@ public abstract class AbstractHandlerMapping extends WebApplicationObjectSupport
 	}
 
 	/**
-	 * Set if URL lookup should always use the full path within the current servlet
-	 * context. Else, the path within the current servlet mapping is used if applicable
-	 * (that is, in the case of a ".../*" servlet mapping in web.xml).
-	 * <p>Default is "false".
-	 * @see org.springframework.web.util.UrlPathHelper#setAlwaysUseFullPath
+	 * Shortcut to same property on underlying {@link #setUrlPathHelper UrlPathHelper}.
+	 * @see org.springframework.web.util.UrlPathHelper#setAlwaysUseFullPath(boolean)
 	 */
 	public void setAlwaysUseFullPath(boolean alwaysUseFullPath) {
 		this.urlPathHelper.setAlwaysUseFullPath(alwaysUseFullPath);
@@ -129,11 +127,8 @@ public abstract class AbstractHandlerMapping extends WebApplicationObjectSupport
 	}
 
 	/**
-	 * Set if context path and request URI should be URL-decoded. Both are returned
-	 * <i>undecoded</i> by the Servlet API, in contrast to the servlet path.
-	 * <p>Uses either the request encoding or the default encoding according
-	 * to the Servlet spec (ISO-8859-1).
-	 * @see org.springframework.web.util.UrlPathHelper#setUrlDecode
+	 * Shortcut to same property on underlying {@link #setUrlPathHelper UrlPathHelper}.
+	 * @see org.springframework.web.util.UrlPathHelper#setUrlDecode(boolean)
 	 */
 	public void setUrlDecode(boolean urlDecode) {
 		this.urlPathHelper.setUrlDecode(urlDecode);
@@ -141,8 +136,7 @@ public abstract class AbstractHandlerMapping extends WebApplicationObjectSupport
 	}
 
 	/**
-	 * Set if ";" (semicolon) content should be stripped from the request URI.
-	 * <p>The default value is {@code true}.
+	 * Shortcut to same property on underlying {@link #setUrlPathHelper UrlPathHelper}.
 	 * @see org.springframework.web.util.UrlPathHelper#setRemoveSemicolonContent(boolean)
 	 */
 	public void setRemoveSemicolonContent(boolean removeSemicolonContent) {
@@ -481,6 +475,7 @@ public abstract class AbstractHandlerMapping extends WebApplicationObjectSupport
 
 	private class PreFlightHandler implements HttpRequestHandler, CorsConfigurationSource {
 
+		@Nullable
 		private final CorsConfiguration config;
 
 		public PreFlightHandler(@Nullable CorsConfiguration config) {
@@ -501,6 +496,7 @@ public abstract class AbstractHandlerMapping extends WebApplicationObjectSupport
 
 	private class CorsInterceptor extends HandlerInterceptorAdapter implements CorsConfigurationSource {
 
+		@Nullable
 		private final CorsConfiguration config;
 
 		public CorsInterceptor(@Nullable CorsConfiguration config) {

@@ -58,6 +58,7 @@ public class IsolationLevelDataSourceAdapter extends UserCredentialsDataSourceAd
 	/** Constants instance for TransactionDefinition */
 	private static final Constants constants = new Constants(TransactionDefinition.class);
 
+	@Nullable
 	private Integer isolationLevel;
 
 
@@ -125,7 +126,7 @@ public class IsolationLevelDataSourceAdapter extends UserCredentialsDataSourceAd
 	 * @see #getCurrentReadOnlyFlag()
 	 */
 	@Override
-	protected Connection doGetConnection(String username, String password) throws SQLException {
+	protected Connection doGetConnection(@Nullable String username, @Nullable String password) throws SQLException {
 		Connection con = super.doGetConnection(username, password);
 		Boolean readOnlyToUse = getCurrentReadOnlyFlag();
 		if (readOnlyToUse != null) {

@@ -18,7 +18,6 @@ package org.springframework.http.server.reactive;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.charset.StandardCharsets;
 
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -36,12 +35,16 @@ class DefaultServerHttpRequestBuilder implements ServerHttpRequest.Builder {
 
 	private final ServerHttpRequest delegate;
 
+	@Nullable
 	private HttpMethod httpMethod;
 
+	@Nullable
 	private String path;
 
+	@Nullable
 	private String contextPath;
 
+	@Nullable
 	private HttpHeaders httpHeaders;
 
 
@@ -110,7 +113,7 @@ class DefaultServerHttpRequestBuilder implements ServerHttpRequest.Builder {
 			return new DefaultRequestPath(this.delegate.getPath(), this.contextPath);
 		}
 		else {
-			return new DefaultRequestPath(uriToUse, this.contextPath, StandardCharsets.UTF_8);
+			return RequestPath.parse(uriToUse, this.contextPath);
 		}
 	}
 
@@ -134,18 +137,21 @@ class DefaultServerHttpRequestBuilder implements ServerHttpRequest.Builder {
 	 */
 	private static class MutativeDecorator extends ServerHttpRequestDecorator {
 
+		@Nullable
 		private final HttpMethod httpMethod;
 
+		@Nullable
 		private final URI uri;
 
+		@Nullable
 		private final RequestPath requestPath;
 
+		@Nullable
 		private final HttpHeaders httpHeaders;
 
 
-		public MutativeDecorator(ServerHttpRequest delegate, HttpMethod method,
-				@Nullable URI uri, @Nullable RequestPath requestPath,
-				@Nullable HttpHeaders httpHeaders) {
+		public MutativeDecorator(ServerHttpRequest delegate, @Nullable HttpMethod method,
+				@Nullable URI uri, @Nullable RequestPath requestPath, @Nullable HttpHeaders httpHeaders) {
 
 			super(delegate);
 			this.httpMethod = method;

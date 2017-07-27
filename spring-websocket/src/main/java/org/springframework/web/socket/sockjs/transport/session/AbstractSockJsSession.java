@@ -107,8 +107,10 @@ public abstract class AbstractSockJsSession implements SockJsSession {
 
 	private volatile long timeLastActive = this.timeCreated;
 
+	@Nullable
 	private ScheduledFuture<?> heartbeatFuture;
 
+	@Nullable
 	private HeartbeatTask heartbeatTask;
 
 	private volatile boolean heartbeatDisabled;
@@ -125,8 +127,8 @@ public abstract class AbstractSockJsSession implements SockJsSession {
 	public AbstractSockJsSession(String id, SockJsServiceConfig config, WebSocketHandler handler,
 			@Nullable Map<String, Object> attributes) {
 
-		Assert.notNull(id, "SessionId must not be null");
-		Assert.notNull(config, "SockJsConfig must not be null");
+		Assert.notNull(id, "Session id must not be null");
+		Assert.notNull(config, "SockJsServiceConfig must not be null");
 		Assert.notNull(handler, "WebSocketHandler must not be null");
 
 		this.id = id;
@@ -359,8 +361,10 @@ public abstract class AbstractSockJsSession implements SockJsSession {
 	}
 
 	private boolean indicatesDisconnectedClient(Throwable ex)  {
-		return ("Broken pipe".equalsIgnoreCase(NestedExceptionUtils.getMostSpecificCause(ex).getMessage()) ||
-				DISCONNECTED_CLIENT_EXCEPTIONS.contains(ex.getClass().getSimpleName()));
+		String message = NestedExceptionUtils.getMostSpecificCause(ex).getMessage();
+		message = (message != null ? message.toLowerCase() : "");
+		String className = ex.getClass().getSimpleName();
+		return (message.contains("broken pipe") || DISCONNECTED_CLIENT_EXCEPTIONS.contains(className));
 	}
 
 

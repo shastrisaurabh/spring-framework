@@ -20,6 +20,7 @@ import java.net.InetSocketAddress;
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.security.Principal;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -32,13 +33,17 @@ import java.util.concurrent.ConcurrentHashMap;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import org.springframework.http.HttpCookie;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpRange;
 import org.springframework.http.MediaType;
+import org.springframework.http.server.reactive.PathContainer;
+import org.springframework.http.server.reactive.RequestPath;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.BodyExtractor;
@@ -57,8 +62,13 @@ public class MockServerRequest implements ServerRequest {
 
 	private final URI uri;
 
+	private final RequestPath pathContainer;
+
 	private final MockHeaders headers;
 
+	private final MultiValueMap<String, HttpCookie> cookies;
+
+	@Nullable
 	private final Object body;
 
 	private final Map<String, Object> attributes;
@@ -67,18 +77,23 @@ public class MockServerRequest implements ServerRequest {
 
 	private final Map<String, String> pathVariables;
 
+	@Nullable
 	private final WebSession session;
 
+	@Nullable
 	private Principal principal;
 
 
-	private MockServerRequest(HttpMethod method, URI uri, MockHeaders headers, @Nullable Object body,
+	private MockServerRequest(HttpMethod method, URI uri, String contextPath, MockHeaders headers,
+			MultiValueMap<String, HttpCookie> cookies, @Nullable Object body,
 			Map<String, Object> attributes, MultiValueMap<String, String> queryParams,
-			Map<String, String> pathVariables, WebSession session, Principal principal) {
+			Map<String, String> pathVariables, @Nullable WebSession session, @Nullable Principal principal) {
 
 		this.method = method;
 		this.uri = uri;
+		this.pathContainer = RequestPath.parse(uri, contextPath);
 		this.headers = headers;
+		this.cookies = cookies;
 		this.body = body;
 		this.attributes = attributes;
 		this.queryParams = queryParams;
@@ -99,8 +114,18 @@ public class MockServerRequest implements ServerRequest {
 	}
 
 	@Override
+	public PathContainer pathContainer() {
+		return this.pathContainer;
+	}
+
+	@Override
 	public Headers headers() {
 		return this.headers;
+	}
+
+	@Override
+	public MultiValueMap<String, HttpCookie> cookies() {
+		return this.cookies;
 	}
 
 	@Override
@@ -131,20 +156,14 @@ public class MockServerRequest implements ServerRequest {
 		return (Flux<S>) this.body;
 	}
 
-	@SuppressWarnings("unchecked")
-	@Override
-	public <S> Optional<S> attribute(String name) {
-		return Optional.ofNullable((S) this.attributes.get(name));
-	}
-
 	@Override
 	public Map<String, Object> attributes() {
 		return this.attributes;
 	}
 
 	@Override
-	public List<String> queryParams(String name) {
-		return Collections.unmodifiableList(this.queryParams.get(name));
+	public MultiValueMap<String, String> queryParams() {
+		return CollectionUtils.unmodifiableMultiValueMap(this.queryParams);
 	}
 
 	@Override
@@ -175,9 +194,15 @@ public class MockServerRequest implements ServerRequest {
 
 		Builder uri(URI uri);
 
+		Builder contextPath(String contextPath);
+
 		Builder header(String key, String value);
 
 		Builder headers(HttpHeaders headers);
+
+		Builder cookie(HttpCookie... cookies);
+
+		Builder cookies(MultiValueMap<String, HttpCookie> cookies);
 
 		Builder attribute(String name, Object value);
 
@@ -207,8 +232,13 @@ public class MockServerRequest implements ServerRequest {
 
 		private URI uri = URI.create("http://localhost");
 
+		private String contextPath = "";
+
 		private MockHeaders headers = new MockHeaders(new HttpHeaders());
 
+		private MultiValueMap<String, HttpCookie> cookies = new LinkedMultiValueMap<>();
+
+		@Nullable
 		private Object body;
 
 		private Map<String, Object> attributes = new ConcurrentHashMap<>();
@@ -217,8 +247,10 @@ public class MockServerRequest implements ServerRequest {
 
 		private Map<String, String> pathVariables = new LinkedHashMap<>();
 
+		@Nullable
 		private WebSession session;
 
+		@Nullable
 		private Principal principal;
 
 		@Override
@@ -232,6 +264,27 @@ public class MockServerRequest implements ServerRequest {
 		public Builder uri(URI uri) {
 			Assert.notNull(uri, "'uri' must not be null");
 			this.uri = uri;
+			return this;
+		}
+
+		@Override
+		public Builder contextPath(String contextPath) {
+			Assert.notNull(contextPath, "'contextPath' must not be null");
+			this.contextPath = contextPath;
+			return this;
+
+		}
+
+		@Override
+		public Builder cookie(HttpCookie... cookies) {
+			Arrays.stream(cookies).forEach(cookie -> this.cookies.add(cookie.getName(), cookie));
+			return this;
+		}
+
+		@Override
+		public Builder cookies(MultiValueMap<String, HttpCookie> cookies) {
+			Assert.notNull(cookies, "'cookies' must not be null");
+			this.cookies = cookies;
 			return this;
 		}
 
@@ -312,16 +365,16 @@ public class MockServerRequest implements ServerRequest {
 		@Override
 		public MockServerRequest body(Object body) {
 			this.body = body;
-			return new MockServerRequest(this.method, this.uri, this.headers, this.body,
-					this.attributes, this.queryParams, this.pathVariables, this.session,
-					this.principal);
+			return new MockServerRequest(this.method, this.uri, this.contextPath, this.headers,
+					this.cookies, this.body, this.attributes, this.queryParams, this.pathVariables,
+					this.session, this.principal);
 		}
 
 		@Override
 		public MockServerRequest build() {
-			return new MockServerRequest(this.method, this.uri, this.headers, null,
-					this.attributes, this.queryParams, this.pathVariables, this.session,
-					this.principal);
+			return new MockServerRequest(this.method, this.uri, this.contextPath, this.headers,
+					this.cookies, null, this.attributes, this.queryParams, this.pathVariables,
+					this.session, this.principal);
 		}
 	}
 

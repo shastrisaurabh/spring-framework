@@ -29,7 +29,6 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
-
 import javax.servlet.Filter;
 import javax.servlet.FilterRegistration;
 import javax.servlet.RequestDispatcher;
@@ -131,14 +130,17 @@ public class MockServletContext implements ServletContext {
 
 	private final Set<String> declaredRoles = new LinkedHashSet<>();
 
+	@Nullable
 	private Set<SessionTrackingMode> sessionTrackingModes;
 
 	private final SessionCookieConfig sessionCookieConfig = new MockSessionCookieConfig();
 
 	private int sessionTimeout;
 
+	@Nullable
 	private String requestCharacterEncoding;
 
+	@Nullable
 	private String responseCharacterEncoding;
 
 	private final Map<String, MediaType> mimeTypes = new LinkedHashMap<>();
@@ -580,21 +582,23 @@ public class MockServletContext implements ServletContext {
 	}
 
 	// @Override - but only against Servlet 4.0
-	public void setRequestCharacterEncoding(String requestCharacterEncoding) {
+	public void setRequestCharacterEncoding(@Nullable String requestCharacterEncoding) {
 		this.requestCharacterEncoding = requestCharacterEncoding;
 	}
 
 	// @Override - but only against Servlet 4.0
+	@Nullable
 	public String getRequestCharacterEncoding() {
 		return this.requestCharacterEncoding;
 	}
 
 	// @Override - but only against Servlet 4.0
-	public void setResponseCharacterEncoding(String responseCharacterEncoding) {
+	public void setResponseCharacterEncoding(@Nullable String responseCharacterEncoding) {
 		this.responseCharacterEncoding = responseCharacterEncoding;
 	}
 
 	// @Override - but only against Servlet 4.0
+	@Nullable
 	public String getResponseCharacterEncoding() {
 		return this.responseCharacterEncoding;
 	}

@@ -35,10 +35,13 @@ import org.springframework.util.Assert;
  */
 public class DataSourceInitializer implements InitializingBean, DisposableBean {
 
+	@Nullable
 	private DataSource dataSource;
 
+	@Nullable
 	private DatabasePopulator databasePopulator;
 
+	@Nullable
 	private DatabasePopulator databaseCleaner;
 
 	private boolean enabled = true;

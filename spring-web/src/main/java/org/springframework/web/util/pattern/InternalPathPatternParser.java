@@ -16,12 +16,12 @@
 
 package org.springframework.web.util.pattern;
 
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.PatternSyntaxException;
 
-import org.springframework.web.util.UriUtils;
+import org.springframework.lang.Nullable;
+import org.springframework.util.Assert;
 import org.springframework.web.util.pattern.PatternParseException.PatternMessage;
 
 /**
@@ -32,6 +32,8 @@ import org.springframework.web.util.pattern.PatternParseException.PatternMessage
  * @since 5.0
  */
 class InternalPathPatternParser {
+
+	private PathPatternParser parser;
 
 	// The expected path separator to split path elements during parsing
 	char separator = PathPatternParser.DEFAULT_SEPARATOR;
@@ -45,7 +47,7 @@ class InternalPathPatternParser {
 	private boolean matchOptionalTrailingSlash = false;
 	
 	// The input data for parsing
-	private char[] pathPatternData;
+	private char[] pathPatternData = new char[0];
 
 	// The length of the input data
 	private int pathPatternLength;
@@ -76,12 +78,15 @@ class InternalPathPatternParser {
 	int variableCaptureStart;
 
 	// Variables captures in this path pattern
+	@Nullable
 	List<String> capturedVariableNames;
 
 	// The head of the path element chain currently being built
+	@Nullable
 	PathElement headPE;
 
 	// The most recently constructed path element in the chain
+	@Nullable
 	PathElement currentPE;
 
 
@@ -95,6 +100,9 @@ class InternalPathPatternParser {
 		this.separator = separator;
 		this.caseSensitive = caseSensitive;
 		this.matchOptionalTrailingSlash = matchOptionalTrailingSlash;
+		this.parser = new PathPatternParser(this.separator);
+		this.parser.setCaseSensitive(this.caseSensitive);
+		this.parser.setMatchOptionalTrailingSlash(this.matchOptionalTrailingSlash);
 	}
 
 
@@ -108,8 +116,10 @@ class InternalPathPatternParser {
 	 * @throws PatternParseException in case of parse errors
 	 */
 	public PathPattern parse(String pathPattern) throws PatternParseException {
+		Assert.notNull(pathPattern, "Path pattern must not be null");
+
 		this.pathPatternData = pathPattern.toCharArray();
-		this.pathPatternLength = pathPatternData.length;
+		this.pathPatternLength = this.pathPatternData.length;
 		this.headPE = null;
 		this.currentPE = null;
 		this.capturedVariableNames = null;
@@ -201,7 +211,7 @@ class InternalPathPatternParser {
 			pushPathElement(createPathElement());
 		}
 		return new PathPattern(
-				pathPattern, this.headPE, this.separator, this.caseSensitive, this.matchOptionalTrailingSlash);
+				pathPattern, this.parser, this.headPE, this.separator, this.caseSensitive, this.matchOptionalTrailingSlash);
 	}
 
 	/**
@@ -297,7 +307,7 @@ class InternalPathPatternParser {
 				this.headPE = newPathElement;
 				this.currentPE = newPathElement;
 			}
-			else {
+			else if (this.currentPE != null) {
 				this.currentPE.next = newPathElement;
 				newPathElement.prev = this.currentPE;
 				this.currentPE = newPathElement;
@@ -307,17 +317,10 @@ class InternalPathPatternParser {
 		resetPathElementState();
 	}
 	
-	private char[] getPathElementText(boolean encodeElement) {
+	private char[] getPathElementText() {
 		char[] pathElementText = new char[this.pos - this.pathElementStart];
-		if (encodeElement) {
-			String unencoded = new String(this.pathPatternData, this.pathElementStart, this.pos - this.pathElementStart);
-			String encoded = UriUtils.encodeFragment(unencoded, StandardCharsets.UTF_8);
-			pathElementText = encoded.toCharArray();
-		}
-		else {
-			System.arraycopy(this.pathPatternData, this.pathElementStart, pathElementText, 0,
-					this.pos - this.pathElementStart);
-		}
+		System.arraycopy(this.pathPatternData, this.pathElementStart, pathElementText, 0,
+				this.pos - this.pathElementStart);
 		return pathElementText;
 	}
 
@@ -338,12 +341,12 @@ class InternalPathPatternParser {
 					this.pathPatternData[this.pos - 1] == '}') {
 				if (this.isCaptureTheRestVariable) {
 					// It is {*....}
-					newPE = new CaptureTheRestPathElement(pathElementStart, getPathElementText(false), separator);
+					newPE = new CaptureTheRestPathElement(pathElementStart, getPathElementText(), separator);
 				}
 				else {
 					// It is a full capture of this element (possibly with constraint), for example: /foo/{abc}/
 					try {
-						newPE = new CaptureVariablePathElement(this.pathElementStart, getPathElementText(false),
+						newPE = new CaptureVariablePathElement(this.pathElementStart, getPathElementText(),
 								this.caseSensitive, this.separator);
 					}
 					catch (PatternSyntaxException pse) {
@@ -361,7 +364,7 @@ class InternalPathPatternParser {
 							PatternMessage.CAPTURE_ALL_IS_STANDALONE_CONSTRUCT);
 				}
 				RegexPathElement newRegexSection = new RegexPathElement(this.pathElementStart, 
-						getPathElementText(false), this.caseSensitive,
+						getPathElementText(), this.caseSensitive,
 						this.pathPatternData, this.separator);
 				for (String variableName : newRegexSection.getVariableNames()) {
 					recordCapturedVariable(this.pathElementStart, variableName);
@@ -375,16 +378,16 @@ class InternalPathPatternParser {
 					newPE = new WildcardPathElement(this.pathElementStart, this.separator);
 				}
 				else {
-					newPE = new RegexPathElement(this.pathElementStart, getPathElementText(false),
+					newPE = new RegexPathElement(this.pathElementStart, getPathElementText(),
 							this.caseSensitive, this.pathPatternData, this.separator);
 				}
 			}
 			else if (this.singleCharWildcardCount != 0) {
-				newPE = new SingleCharWildcardedPathElement(this.pathElementStart, getPathElementText(true),
+				newPE = new SingleCharWildcardedPathElement(this.pathElementStart, getPathElementText(),
 						this.singleCharWildcardCount, this.caseSensitive, this.separator);
 			}
 			else {
-				newPE = new LiteralPathElement(this.pathElementStart, getPathElementText(true),
+				newPE = new LiteralPathElement(this.pathElementStart, getPathElementText(),
 						this.caseSensitive, this.separator);
 			}
 		}

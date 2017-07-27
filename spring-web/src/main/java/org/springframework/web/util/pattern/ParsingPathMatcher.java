@@ -16,13 +16,17 @@
 
 package org.springframework.web.util.pattern;
 
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Collectors;
 
+import org.springframework.http.server.reactive.PathContainer;
 import org.springframework.lang.Nullable;
 import org.springframework.util.PathMatcher;
+import org.springframework.web.util.pattern.PathPattern.PathMatchResult;
 
 /**
  * {@link PathMatcher} implementation for path patterns parsed
@@ -56,25 +60,36 @@ public class ParsingPathMatcher implements PathMatcher {
 	@Override
 	public boolean match(String pattern, String path) {
 		PathPattern pathPattern = getPathPattern(pattern);
-		return pathPattern.matches(path);
+		return pathPattern.matches(PathContainer.parseUrlPath(path));
 	}
 
 	@Override
 	public boolean matchStart(String pattern, String path) {
 		PathPattern pathPattern = getPathPattern(pattern);
-		return pathPattern.matchStart(path);
+		return pathPattern.matchStart(PathContainer.parseUrlPath(path));
 	}
 
 	@Override
 	public String extractPathWithinPattern(String pattern, String path) {
 		PathPattern pathPattern = getPathPattern(pattern);
-		return pathPattern.extractPathWithinPattern(path);
+		PathContainer pathContainer = PathContainer.parseUrlPath(path);
+		return pathPattern.extractPathWithinPattern(pathContainer).value();
 	}
 
 	@Override
 	public Map<String, String> extractUriTemplateVariables(String pattern, String path) {
 		PathPattern pathPattern = getPathPattern(pattern);
-		return pathPattern.matchAndExtract(path);
+		PathContainer pathContainer = PathContainer.parseUrlPath(path);
+		PathMatchResult results = pathPattern.matchAndExtract(pathContainer);
+		// Collapse PathMatchResults to simple value results
+		// TODO: (path parameters are lost in this translation)
+		if (results.getUriVariables().size() == 0) {
+			return Collections.emptyMap();
+		}
+		else {
+			return results.getUriVariables().entrySet().stream()
+					.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+		}
 	}
 
 	@Override
@@ -85,7 +100,7 @@ public class ParsingPathMatcher implements PathMatcher {
 	@Override
 	public String combine(String pattern1, String pattern2) {
 		PathPattern pathPattern = getPathPattern(pattern1);
-		return pathPattern.combine(pattern2);
+		return pathPattern.combine(getPathPattern(pattern2)).getPatternString();
 	}
 
 	private PathPattern getPathPattern(String pattern) {

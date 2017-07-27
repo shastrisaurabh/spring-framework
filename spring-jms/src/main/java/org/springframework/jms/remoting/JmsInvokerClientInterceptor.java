@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2015 the original author or authors.
+ * Copyright 2002-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,8 +74,10 @@ import org.springframework.util.Assert;
  */
 public class JmsInvokerClientInterceptor implements MethodInterceptor, InitializingBean {
 
+	@Nullable
 	private ConnectionFactory connectionFactory;
 
+	@Nullable
 	private Object queue;
 
 	private DestinationResolver destinationResolver = new DynamicDestinationResolver();
@@ -90,7 +92,7 @@ public class JmsInvokerClientInterceptor implements MethodInterceptor, Initializ
 	/**
 	 * Set the QueueConnectionFactory to use for obtaining JMS QueueConnections.
 	 */
-	public void setConnectionFactory(ConnectionFactory connectionFactory) {
+	public void setConnectionFactory(@Nullable ConnectionFactory connectionFactory) {
 		this.connectionFactory = connectionFactory;
 	}
 
@@ -190,6 +192,7 @@ public class JmsInvokerClientInterceptor implements MethodInterceptor, Initializ
 
 
 	@Override
+	@Nullable
 	public Object invoke(MethodInvocation methodInvocation) throws Throwable {
 		if (AopUtils.isToStringMethod(methodInvocation.getMethod())) {
 			return "JMS invoker proxy for queue [" + this.queue + "]";

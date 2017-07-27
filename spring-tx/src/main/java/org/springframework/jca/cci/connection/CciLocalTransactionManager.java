@@ -66,6 +66,7 @@ import org.springframework.util.Assert;
 public class CciLocalTransactionManager extends AbstractPlatformTransactionManager
 		implements ResourceTransactionManager, InitializingBean {
 
+	@Nullable
 	private ConnectionFactory connectionFactory;
 
 
@@ -91,7 +92,7 @@ public class CciLocalTransactionManager extends AbstractPlatformTransactionManag
 	 * Set the CCI ConnectionFactory that this instance should manage local
 	 * transactions for.
 	 */
-	public void setConnectionFactory(ConnectionFactory cf) {
+	public void setConnectionFactory(@Nullable ConnectionFactory cf) {
 		if (cf instanceof TransactionAwareConnectionFactoryProxy) {
 			// If we got a TransactionAwareConnectionFactoryProxy, we need to perform transactions
 			// for its underlying target ConnectionFactory, else JMS access code won't see
@@ -273,6 +274,7 @@ public class CciLocalTransactionManager extends AbstractPlatformTransactionManag
 	 */
 	private static class CciLocalTransactionObject {
 
+		@Nullable
 		private ConnectionHolder connectionHolder;
 
 		public void setConnectionHolder(@Nullable ConnectionHolder connectionHolder) {

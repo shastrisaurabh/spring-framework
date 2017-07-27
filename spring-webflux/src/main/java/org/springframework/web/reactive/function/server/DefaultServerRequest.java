@@ -32,14 +32,17 @@ import java.util.function.Function;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import org.springframework.http.HttpCookie;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpRange;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.HttpMessageReader;
+import org.springframework.http.server.reactive.PathContainer;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.util.Assert;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.BodyExtractor;
 import org.springframework.web.reactive.function.BodyExtractors;
 import org.springframework.web.reactive.function.UnsupportedMediaTypeException;
@@ -91,8 +94,18 @@ class DefaultServerRequest implements ServerRequest {
 	}
 
 	@Override
+	public PathContainer pathContainer() {
+		return request().getPath();
+	}
+
+	@Override
 	public Headers headers() {
 		return this.headers;
+	}
+
+	@Override
+	public MultiValueMap<String, HttpCookie> cookies() {
+		return request().getCookies();
 	}
 
 	@Override
@@ -133,25 +146,19 @@ class DefaultServerRequest implements ServerRequest {
 	}
 
 	@Override
-	public <T> Optional<T> attribute(String name) {
-		return this.exchange.getAttribute(name);
-	}
-
-	@Override
 	public Map<String, Object> attributes() {
 		return this.exchange.getAttributes();
 	}
 
 	@Override
-	public List<String> queryParams(String name) {
-		List<String> queryParams = request().getQueryParams().get(name);
-		return queryParams != null ? queryParams : Collections.emptyList();
+	public MultiValueMap<String, String> queryParams() {
+		return request().getQueryParams();
 	}
 
 	@Override
 	public Map<String, String> pathVariables() {
-		return this.exchange.<Map<String, String>>getAttribute(RouterFunctions.URI_TEMPLATE_VARIABLES_ATTRIBUTE).
-				orElseGet(Collections::emptyMap);
+		return this.exchange.getAttributeOrDefault(
+				RouterFunctions.URI_TEMPLATE_VARIABLES_ATTRIBUTE, Collections.emptyMap());
 	}
 
 	@Override

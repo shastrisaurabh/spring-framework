@@ -16,6 +16,8 @@
 
 package org.springframework.aop.framework;
 
+import java.io.Closeable;
+
 import org.springframework.beans.factory.Aware;
 import org.springframework.beans.factory.BeanClassLoaderAware;
 import org.springframework.beans.factory.DisposableBean;
@@ -43,6 +45,7 @@ public class ProxyProcessorSupport extends ProxyConfig implements Ordered, BeanC
 	 */
 	private int order = Ordered.LOWEST_PRECEDENCE;
 
+	@Nullable
 	private ClassLoader proxyClassLoader = ClassUtils.getDefaultClassLoader();
 
 	private boolean classLoaderConfigured = false;
@@ -77,6 +80,7 @@ public class ProxyProcessorSupport extends ProxyConfig implements Ordered, BeanC
 	/**
 	 * Return the configured proxy ClassLoader for this processor.
 	 */
+	@Nullable
 	protected ClassLoader getProxyClassLoader() {
 		return this.proxyClassLoader;
 	}
@@ -127,8 +131,8 @@ public class ProxyProcessorSupport extends ProxyConfig implements Ordered, BeanC
 	 * @return whether the given interface is just a container callback
 	 */
 	protected boolean isConfigurationCallbackInterface(Class<?> ifc) {
-		return (InitializingBean.class == ifc || DisposableBean.class == ifc ||
-				ObjectUtils.containsElement(ifc.getInterfaces(), Aware.class));
+		return (InitializingBean.class == ifc || DisposableBean.class == ifc || Closeable.class == ifc ||
+				AutoCloseable.class == ifc || ObjectUtils.containsElement(ifc.getInterfaces(), Aware.class));
 	}
 
 	/**

@@ -38,8 +38,10 @@ import org.springframework.util.Assert;
  */
 class SpringPersistenceUnitInfo extends MutablePersistenceUnitInfo {
 
+	@Nullable
 	private LoadTimeWeaver loadTimeWeaver;
 
+	@Nullable
 	private ClassLoader classLoader;
 
 
@@ -67,6 +69,7 @@ class SpringPersistenceUnitInfo extends MutablePersistenceUnitInfo {
 	 * if specified.
 	 */
 	@Override
+	@Nullable
 	public ClassLoader getClassLoader() {
 		return this.classLoader;
 	}

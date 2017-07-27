@@ -44,16 +44,22 @@ import org.springframework.util.Assert;
  */
 public class LocalJaxWsServiceFactory {
 
+	@Nullable
 	private URL wsdlDocumentUrl;
 
+	@Nullable
 	private String namespaceUri;
 
+	@Nullable
 	private String serviceName;
 
+	@Nullable
 	private WebServiceFeature[] serviceFeatures;
 
+	@Nullable
 	private Executor executor;
 
+	@Nullable
 	private HandlerResolver handlerResolver;
 
 
@@ -61,7 +67,7 @@ public class LocalJaxWsServiceFactory {
 	 * Set the URL of the WSDL document that describes the service.
 	 * @see #setWsdlDocumentResource(Resource)
 	 */
-	public void setWsdlDocumentUrl(URL wsdlDocumentUrl) {
+	public void setWsdlDocumentUrl(@Nullable URL wsdlDocumentUrl) {
 		this.wsdlDocumentUrl = wsdlDocumentUrl;
 	}
 
@@ -103,7 +109,7 @@ public class LocalJaxWsServiceFactory {
 	 * Set the name of the service to look up.
 	 * Corresponds to the "wsdl:service" name.
 	 */
-	public void setServiceName(String serviceName) {
+	public void setServiceName(@Nullable String serviceName) {
 		this.serviceName = serviceName;
 	}
 

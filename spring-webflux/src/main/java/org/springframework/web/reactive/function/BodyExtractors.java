@@ -93,7 +93,7 @@ public abstract class BodyExtractors {
 		Assert.notNull(elementType, "'elementType' must not be null");
 		return (inputMessage, context) -> readWithMessageReaders(inputMessage, context,
 				elementType,
-				reader -> {
+				(HttpMessageReader<T> reader) -> {
 					Optional<ServerHttpResponse> serverResponse = context.serverResponse();
 					if (serverResponse.isPresent() && inputMessage instanceof ServerHttpRequest) {
 						return reader.readMono(elementType, elementType, (ServerHttpRequest) inputMessage,
@@ -103,7 +103,8 @@ public abstract class BodyExtractors {
 						return reader.readMono(elementType, inputMessage, context.hints());
 					}
 				},
-				Mono::error,
+				ex -> (inputMessage.getHeaders().getContentType() == null) ?
+						Mono.from(permitEmptyOrFail(inputMessage, ex)) : Mono.error(ex),
 				Mono::empty);
 	}
 
@@ -138,11 +139,12 @@ public abstract class BodyExtractors {
 		return toFlux(ResolvableType.forType(typeReference.getType()));
 	}
 
+	@SuppressWarnings("unchecked")
 	static <T> BodyExtractor<Flux<T>, ReactiveHttpInputMessage> toFlux(ResolvableType elementType) {
 		Assert.notNull(elementType, "'elementType' must not be null");
 		return (inputMessage, context) -> readWithMessageReaders(inputMessage, context,
 				elementType,
-				reader -> {
+				(HttpMessageReader<T> reader) -> {
 					Optional<ServerHttpResponse> serverResponse = context.serverResponse();
 					if (serverResponse.isPresent() && inputMessage instanceof ServerHttpRequest) {
 						return reader.read(elementType, elementType, (ServerHttpRequest) inputMessage,
@@ -152,8 +154,16 @@ public abstract class BodyExtractors {
 						return reader.read(elementType, inputMessage, context.hints());
 					}
 				},
-				Flux::error,
+				ex -> (inputMessage.getHeaders().getContentType() == null) ?
+						permitEmptyOrFail(inputMessage, ex) : Flux.error(ex),
 				Flux::empty);
+	}
+
+	@SuppressWarnings("unchecked")
+	private static <T> Flux<T> permitEmptyOrFail(ReactiveHttpInputMessage message, UnsupportedMediaTypeException ex) {
+		return message.getBody().doOnNext(buffer -> {
+			throw ex;
+		}).map(o -> (T) o);
 	}
 
 	/**
@@ -225,7 +235,8 @@ public abstract class BodyExtractors {
 
 	private static <T, S extends Publisher<T>> S readWithMessageReaders(
 			ReactiveHttpInputMessage inputMessage, BodyExtractor.Context context, ResolvableType elementType,
-			Function<HttpMessageReader<T>, S> readerFunction, Function<Throwable, S> unsupportedError,
+			Function<HttpMessageReader<T>, S> readerFunction,
+			Function<UnsupportedMediaTypeException, S> unsupportedError,
 			Supplier<S> empty) {
 
 		if (VOID_TYPE.equals(elementType)) {

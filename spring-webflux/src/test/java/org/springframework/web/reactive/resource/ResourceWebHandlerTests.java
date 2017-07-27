@@ -44,6 +44,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.server.reactive.PathContainer;
 import org.springframework.mock.http.server.reactive.test.MockServerHttpRequest;
 import org.springframework.mock.http.server.reactive.test.MockServerHttpResponse;
 import org.springframework.mock.http.server.reactive.test.MockServerWebExchange;
@@ -277,14 +278,6 @@ public class ResourceWebHandlerTests {
 	}
 
 	@Test
-	public void ignoreInvalidEscapeSequence() throws Exception {
-		ServerWebExchange exchange = MockServerHttpRequest.get("").toExchange();
-		setPathWithinHandlerMapping(exchange, "/%foo%/bar.txt");
-		this.handler.handle(exchange).block(TIMEOUT);
-		assertEquals(HttpStatus.NOT_FOUND, exchange.getResponse().getStatusCode());
-	}
-
-	@Test
 	public void processPath() throws Exception {
 		assertSame("/foo/bar", this.handler.processPath("/foo/bar"));
 		assertSame("foo/bar", this.handler.processPath("foo/bar"));
@@ -388,7 +381,7 @@ public class ResourceWebHandlerTests {
 		assertEquals(HttpStatus.NOT_FOUND, exchange.getResponse().getStatusCode());
 	}
 
-	@Test(expected = IllegalStateException.class)
+	@Test(expected = IllegalArgumentException.class)
 	public void noPathWithinHandlerMappingAttribute() throws Exception {
 		MockServerWebExchange exchange = MockServerHttpRequest.get("").toExchange();
 		this.handler.handle(exchange).block(TIMEOUT);
@@ -559,7 +552,8 @@ public class ResourceWebHandlerTests {
 
 
 	private void setPathWithinHandlerMapping(ServerWebExchange exchange, String path) {
-		exchange.getAttributes().put(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE, path);
+		exchange.getAttributes().put(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE,
+				PathContainer.parsePath(path));
 	}
 
 	private long resourceLastModified(String resourceName) throws IOException {

@@ -64,8 +64,10 @@ import org.springframework.util.ObjectUtils;
  */
 public abstract class AbstractMessageSource extends MessageSourceSupport implements HierarchicalMessageSource {
 
+	@Nullable
 	private MessageSource parentMessageSource;
 
+	@Nullable
 	private Properties commonMessages;
 
 	private boolean useCodeAsDefaultMessage = false;
@@ -77,6 +79,7 @@ public abstract class AbstractMessageSource extends MessageSourceSupport impleme
 	}
 
 	@Override
+	@Nullable
 	public MessageSource getParentMessageSource() {
 		return this.parentMessageSource;
 	}
@@ -87,7 +90,7 @@ public abstract class AbstractMessageSource extends MessageSourceSupport impleme
 	 * <p>May also link to an externally defined Properties object, e.g. defined
 	 * through a {@link org.springframework.beans.factory.config.PropertiesFactoryBean}.
 	 */
-	public void setCommonMessages(Properties commonMessages) {
+	public void setCommonMessages(@Nullable Properties commonMessages) {
 		this.commonMessages = commonMessages;
 	}
 

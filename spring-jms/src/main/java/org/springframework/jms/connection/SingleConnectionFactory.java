@@ -82,21 +82,27 @@ public class SingleConnectionFactory implements ConnectionFactory, QueueConnecti
 
 	protected final Log logger = LogFactory.getLog(getClass());
 
+	@Nullable
 	private ConnectionFactory targetConnectionFactory;
 
+	@Nullable
 	private String clientId;
 
+	@Nullable
 	private ExceptionListener exceptionListener;
 
 	private boolean reconnectOnException = false;
 
 	/** The target Connection */
+	@Nullable
 	private Connection connection;
 
 	/** A hint whether to create a queue or topic connection */
+	@Nullable
 	private Boolean pubSubMode;
 
 	/** An internal aggregator allowing for per-connection ExceptionListeners */
+	@Nullable
 	private AggregatedExceptionListener aggregatedExceptionListener;
 
 	/** Whether the shared Connection has been started */
@@ -137,7 +143,7 @@ public class SingleConnectionFactory implements ConnectionFactory, QueueConnecti
 	 * Set the target ConnectionFactory which will be used to lazily
 	 * create a single Connection.
 	 */
-	public void setTargetConnectionFactory(ConnectionFactory targetConnectionFactory) {
+	public void setTargetConnectionFactory(@Nullable ConnectionFactory targetConnectionFactory) {
 		this.targetConnectionFactory = targetConnectionFactory;
 	}
 
@@ -145,7 +151,7 @@ public class SingleConnectionFactory implements ConnectionFactory, QueueConnecti
 	 * Return the target ConnectionFactory which will be used to lazily
 	 * create a single Connection, if any.
 	 */
-	@org.springframework.lang.Nullable
+	@Nullable
 	public ConnectionFactory getTargetConnectionFactory() {
 		return this.targetConnectionFactory;
 	}
@@ -159,7 +165,7 @@ public class SingleConnectionFactory implements ConnectionFactory, QueueConnecti
 	 * @see javax.jms.Connection#setClientID
 	 * @see #setTargetConnectionFactory
 	 */
-	public void setClientId(String clientId) {
+	public void setClientId(@Nullable String clientId) {
 		this.clientId = clientId;
 	}
 
@@ -167,7 +173,7 @@ public class SingleConnectionFactory implements ConnectionFactory, QueueConnecti
 	 * Return a JMS client ID for the single Connection created and exposed
 	 * by this ConnectionFactory, if any.
 	 */
-	@org.springframework.lang.Nullable
+	@Nullable
 	protected String getClientId() {
 		return this.clientId;
 	}
@@ -177,7 +183,7 @@ public class SingleConnectionFactory implements ConnectionFactory, QueueConnecti
 	 * registered with the single Connection created by this factory.
 	 * @see #setReconnectOnException
 	 */
-	public void setExceptionListener(ExceptionListener exceptionListener) {
+	public void setExceptionListener(@Nullable ExceptionListener exceptionListener) {
 		this.exceptionListener = exceptionListener;
 	}
 
@@ -525,6 +531,7 @@ public class SingleConnectionFactory implements ConnectionFactory, QueueConnecti
 	 */
 	private class SharedConnectionInvocationHandler implements InvocationHandler {
 
+		@Nullable
 		private ExceptionListener localExceptionListener;
 
 		private boolean locallyStarted = false;
@@ -699,12 +706,14 @@ public class SingleConnectionFactory implements ConnectionFactory, QueueConnecti
 
 		@Override
 		public void onException(JMSException ex) {
+			// Iterate over temporary copy in order to avoid ConcurrentModificationException,
+			// since listener invocations may in turn trigger registration of listeners...
+			Set<ExceptionListener> copy;
 			synchronized (connectionMonitor) {
-				// Iterate over temporary copy in order to avoid ConcurrentModificationException,
-				// since listener invocations may in turn trigger registration of listeners...
-				for (ExceptionListener listener : new LinkedHashSet<>(this.delegates)) {
-					listener.onException(ex);
-				}
+				copy = new LinkedHashSet<>(this.delegates);
+			}
+			for (ExceptionListener listener : copy) {
+				listener.onException(ex);
 			}
 		}
 	}

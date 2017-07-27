@@ -47,12 +47,15 @@ import org.springframework.util.CollectionUtils;
 public class ModelAndView {
 
 	/** View instance or view name String */
+	@Nullable
 	private Object view;
 
 	/** Model Map */
+	@Nullable
 	private ModelMap model;
 
 	/** Optional HTTP status for the response */
+	@Nullable
 	private HttpStatus status;
 
 	/** Indicates whether or not this instance has been cleared with a call to {@link #clear()} */
@@ -261,7 +264,7 @@ public class ModelAndView {
 	 * <p>The response status is set just prior to View rendering.
 	 * @since 4.3
 	 */
-	public void setStatus(HttpStatus status) {
+	public void setStatus(@Nullable HttpStatus status) {
 		this.status = status;
 	}
 

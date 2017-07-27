@@ -61,6 +61,7 @@ public class HttpComponentsClientHttpRequestFactory implements ClientHttpRequest
 
 	private HttpClient httpClient;
 
+	@Nullable
 	private RequestConfig requestConfig;
 
 	private boolean bufferRequestBody = true;
@@ -80,7 +81,7 @@ public class HttpComponentsClientHttpRequestFactory implements ClientHttpRequest
 	 * @param httpClient the HttpClient instance to use for this request factory
 	 */
 	public HttpComponentsClientHttpRequestFactory(HttpClient httpClient) {
-		setHttpClient(httpClient);
+		this.httpClient = httpClient;
 	}
 
 
@@ -152,6 +153,8 @@ public class HttpComponentsClientHttpRequestFactory implements ClientHttpRequest
 
 	@Override
 	public ClientHttpRequest createRequest(URI uri, HttpMethod httpMethod) throws IOException {
+		HttpClient client = getHttpClient();
+
 		HttpUriRequest httpRequest = createHttpUriRequest(httpMethod, uri);
 		postProcessHttpRequest(httpRequest);
 		HttpContext context = createHttpContext(httpMethod, uri);
@@ -167,7 +170,7 @@ public class HttpComponentsClientHttpRequestFactory implements ClientHttpRequest
 				config = ((Configurable) httpRequest).getConfig();
 			}
 			if (config == null) {
-				config = createRequestConfig(getHttpClient());
+				config = createRequestConfig(client);
 			}
 			if (config != null) {
 				context.setAttribute(HttpClientContext.REQUEST_CONFIG, config);
@@ -175,10 +178,10 @@ public class HttpComponentsClientHttpRequestFactory implements ClientHttpRequest
 		}
 
 		if (this.bufferRequestBody) {
-			return new HttpComponentsClientHttpRequest(getHttpClient(), httpRequest, context);
+			return new HttpComponentsClientHttpRequest(client, httpRequest, context);
 		}
 		else {
-			return new HttpComponentsStreamingClientHttpRequest(getHttpClient(), httpRequest, context);
+			return new HttpComponentsStreamingClientHttpRequest(client, httpRequest, context);
 		}
 	}
 

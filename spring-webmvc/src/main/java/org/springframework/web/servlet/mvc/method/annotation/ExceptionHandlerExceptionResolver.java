@@ -75,12 +75,16 @@ import org.springframework.web.servlet.support.RequestContextUtils;
 public class ExceptionHandlerExceptionResolver extends AbstractHandlerMethodExceptionResolver
 		implements ApplicationContextAware, InitializingBean {
 
+	@Nullable
 	private List<HandlerMethodArgumentResolver> customArgumentResolvers;
 
+	@Nullable
 	private HandlerMethodArgumentResolverComposite argumentResolvers;
 
+	@Nullable
 	private List<HandlerMethodReturnValueHandler> customReturnValueHandlers;
 
+	@Nullable
 	private HandlerMethodReturnValueHandlerComposite returnValueHandlers;
 
 	private List<HttpMessageConverter<?>> messageConverters;
@@ -89,6 +93,7 @@ public class ExceptionHandlerExceptionResolver extends AbstractHandlerMethodExce
 
 	private final List<Object> responseBodyAdvice = new ArrayList<>();
 
+	@Nullable
 	private ApplicationContext applicationContext;
 
 	private final Map<Class<?>, ExceptionHandlerMethodResolver> exceptionHandlerCache =
@@ -115,7 +120,7 @@ public class ExceptionHandlerExceptionResolver extends AbstractHandlerMethodExce
 	 * after built-in ones. To override the built-in support for argument
 	 * resolution use {@link #setArgumentResolvers} instead.
 	 */
-	public void setCustomArgumentResolvers(List<HandlerMethodArgumentResolver> argumentResolvers) {
+	public void setCustomArgumentResolvers(@Nullable List<HandlerMethodArgumentResolver> argumentResolvers) {
 		this.customArgumentResolvers= argumentResolvers;
 	}
 
@@ -155,7 +160,7 @@ public class ExceptionHandlerExceptionResolver extends AbstractHandlerMethodExce
 	 * ordered after built-in ones. To override the built-in support for
 	 * return value handling use {@link #setReturnValueHandlers}.
 	 */
-	public void setCustomReturnValueHandlers(List<HandlerMethodReturnValueHandler> returnValueHandlers) {
+	public void setCustomReturnValueHandlers(@Nullable List<HandlerMethodReturnValueHandler> returnValueHandlers) {
 		this.customReturnValueHandlers = returnValueHandlers;
 	}
 
@@ -234,7 +239,7 @@ public class ExceptionHandlerExceptionResolver extends AbstractHandlerMethodExce
 	}
 
 	@Override
-	public void setApplicationContext(ApplicationContext applicationContext) {
+	public void setApplicationContext(@Nullable ApplicationContext applicationContext) {
 		this.applicationContext = applicationContext;
 	}
 
@@ -374,8 +379,12 @@ public class ExceptionHandlerExceptionResolver extends AbstractHandlerMethodExce
 			return null;
 		}
 
-		exceptionHandlerMethod.setHandlerMethodArgumentResolvers(this.argumentResolvers);
-		exceptionHandlerMethod.setHandlerMethodReturnValueHandlers(this.returnValueHandlers);
+		if (this.argumentResolvers != null) {
+			exceptionHandlerMethod.setHandlerMethodArgumentResolvers(this.argumentResolvers);
+		}
+		if (this.returnValueHandlers != null) {
+			exceptionHandlerMethod.setHandlerMethodReturnValueHandlers(this.returnValueHandlers);
+		}
 
 		ServletWebRequest webRequest = new ServletWebRequest(request, response);
 		ModelAndViewContainer mavContainer = new ModelAndViewContainer();

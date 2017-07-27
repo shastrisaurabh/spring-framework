@@ -94,14 +94,17 @@ public class RedirectView extends AbstractUrlBasedView implements SmartView {
 
 	private boolean exposeModelAttributes = true;
 
+	@Nullable
 	private String encodingScheme;
 
+	@Nullable
 	private HttpStatus statusCode;
 
 	private boolean expandUriTemplateVariables = true;
 
 	private boolean propagateQueryParams = false;
 
+	@Nullable
 	private String[] hosts;
 
 
@@ -262,7 +265,7 @@ public class RedirectView extends AbstractUrlBasedView implements SmartView {
 	 * @param hosts one or more application hosts
 	 * @since 4.3
 	 */
-	public void setHosts(String... hosts) {
+	public void setHosts(@Nullable String... hosts) {
 		this.hosts = hosts;
 	}
 
@@ -270,6 +273,7 @@ public class RedirectView extends AbstractUrlBasedView implements SmartView {
 	 * Return the configured application hosts.
 	 * @since 4.3
 	 */
+	@Nullable
 	public String[] getHosts() {
 		return this.hosts;
 	}

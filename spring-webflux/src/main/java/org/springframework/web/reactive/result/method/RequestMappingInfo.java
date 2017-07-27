@@ -16,6 +16,10 @@
 
 package org.springframework.web.reactive.result.method;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.springframework.lang.Nullable;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -29,6 +33,7 @@ import org.springframework.web.reactive.result.condition.RequestCondition;
 import org.springframework.web.reactive.result.condition.RequestConditionHolder;
 import org.springframework.web.reactive.result.condition.RequestMethodsRequestCondition;
 import org.springframework.web.server.ServerWebExchange;
+import org.springframework.web.util.pattern.PathPattern;
 import org.springframework.web.util.pattern.PathPatternParser;
 
 /**
@@ -48,6 +53,7 @@ import org.springframework.web.util.pattern.PathPatternParser;
  */
 public final class RequestMappingInfo implements RequestCondition<RequestMappingInfo> {
 
+	@Nullable
 	private final String name;
 
 	private final PatternsRequestCondition patternsCondition;
@@ -392,18 +398,25 @@ public final class RequestMappingInfo implements RequestCondition<RequestMapping
 
 		private String[] paths;
 
+		@Nullable
 		private RequestMethod[] methods;
 
+		@Nullable
 		private String[] params;
 
+		@Nullable
 		private String[] headers;
 
+		@Nullable
 		private String[] consumes;
 
+		@Nullable
 		private String[] produces;
 
+		@Nullable
 		private String mappingName;
 
+		@Nullable
 		private RequestCondition<?> customCondition;
 
 		private BuilderConfiguration options = new BuilderConfiguration();
@@ -470,8 +483,9 @@ public final class RequestMappingInfo implements RequestCondition<RequestMapping
 		public RequestMappingInfo build() {
 			RequestedContentTypeResolver contentTypeResolver = this.options.getContentTypeResolver();
 
-			PatternsRequestCondition patternsCondition = new PatternsRequestCondition(
-					this.paths, this.options.getPatternParser());
+			PathPatternParser parser = this.options.getPatternParser() != null ?
+					this.options.getPatternParser() : new PathPatternParser();
+			PatternsRequestCondition patternsCondition = new PatternsRequestCondition(parse(this.paths, parser));
 
 			return new RequestMappingInfo(this.mappingName, patternsCondition,
 					new RequestMethodsRequestCondition(methods),
@@ -480,6 +494,18 @@ public final class RequestMappingInfo implements RequestCondition<RequestMapping
 					new ConsumesRequestCondition(this.consumes, this.headers),
 					new ProducesRequestCondition(this.produces, this.headers, contentTypeResolver),
 					this.customCondition);
+		}
+
+		private static List<PathPattern> parse(String[] paths, PathPatternParser parser) {
+			return Arrays
+					.stream(paths)
+					.map(path -> {
+						if (StringUtils.hasText(path) && !path.startsWith("/")) {
+							path = "/" + path;
+						}
+						return parser.parse(path);
+					})
+					.collect(Collectors.toList());
 		}
 	}
 
@@ -492,17 +518,19 @@ public final class RequestMappingInfo implements RequestCondition<RequestMapping
 	 */
 	public static class BuilderConfiguration {
 
+		@Nullable
 		private PathPatternParser patternParser;
 
+		@Nullable
 		private RequestedContentTypeResolver contentTypeResolver;
+
+		public void setPatternParser(PathPatternParser patternParser) {
+			this.patternParser = patternParser;
+		}
 
 		@Nullable
 		public PathPatternParser getPatternParser() {
 			return this.patternParser;
-		}
-
-		public void setPatternParser(PathPatternParser patternParser) {
-			this.patternParser = patternParser;
 		}
 
 		/**

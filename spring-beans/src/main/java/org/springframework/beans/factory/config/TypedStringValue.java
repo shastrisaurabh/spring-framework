@@ -37,12 +37,16 @@ import org.springframework.util.ObjectUtils;
  */
 public class TypedStringValue implements BeanMetadataElement {
 
+	@Nullable
 	private String value;
 
+	@Nullable
 	private volatile Object targetType;
 
+	@Nullable
 	private Object source;
 
+	@Nullable
 	private String specifiedTypeName;
 
 	private volatile boolean dynamic;
@@ -122,8 +126,7 @@ public class TypedStringValue implements BeanMetadataElement {
 	/**
 	 * Specify the type to convert to.
 	 */
-	public void setTargetTypeName(String targetTypeName) {
-		Assert.notNull(targetTypeName, "'targetTypeName' must not be null");
+	public void setTargetTypeName(@Nullable String targetTypeName) {
 		this.targetType = targetTypeName;
 	}
 
@@ -157,7 +160,7 @@ public class TypedStringValue implements BeanMetadataElement {
 	 * @throws ClassNotFoundException if the type cannot be resolved
 	 */
 	@Nullable
-	public Class<?> resolveTargetType(ClassLoader classLoader) throws ClassNotFoundException {
+	public Class<?> resolveTargetType(@Nullable ClassLoader classLoader) throws ClassNotFoundException {
 		String typeName = getTargetTypeName();
 		if (typeName == null) {
 			return null;
@@ -177,6 +180,7 @@ public class TypedStringValue implements BeanMetadataElement {
 	}
 
 	@Override
+	@Nullable
 	public Object getSource() {
 		return this.source;
 	}

@@ -17,10 +17,10 @@
 package org.springframework.http.server.reactive;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.file.StandardOpenOption;
 import java.util.List;
 import java.util.Map;
 
@@ -40,6 +40,7 @@ import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ZeroCopyHttpOutputMessage;
+import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 
 /**
@@ -55,6 +56,7 @@ public class UndertowServerHttpResponse extends AbstractListenerServerHttpRespon
 
 	private final HttpServerExchange exchange;
 
+	@Nullable
 	private StreamSinkChannel responseChannel;
 
 
@@ -83,7 +85,7 @@ public class UndertowServerHttpResponse extends AbstractListenerServerHttpRespon
 		return doCommit(() -> {
 			FileChannel source = null;
 			try {
-				source = new FileInputStream(file).getChannel();
+				source = FileChannel.open(file.toPath(), StandardOpenOption.READ);
 				StreamSinkChannel destination = getUndertowExchange().getResponseChannel();
 				Channels.transferBlocking(destination, source, position, count);
 				return Mono.empty();
@@ -150,6 +152,7 @@ public class UndertowServerHttpResponse extends AbstractListenerServerHttpRespon
 
 		private final StreamSinkChannel channel;
 
+		@Nullable
 		private volatile ByteBuffer byteBuffer;
 
 		public ResponseBodyProcessor(StreamSinkChannel channel) {
@@ -171,14 +174,15 @@ public class UndertowServerHttpResponse extends AbstractListenerServerHttpRespon
 
 		@Override
 		protected boolean write(DataBuffer dataBuffer) throws IOException {
-			if (this.byteBuffer == null) {
+			ByteBuffer buffer = this.byteBuffer;
+			if (buffer == null) {
 				return false;
 			}
 			if (logger.isTraceEnabled()) {
 				logger.trace("write: " + dataBuffer);
 			}
-			int total = this.byteBuffer.remaining();
-			int written = writeByteBuffer(this.byteBuffer);
+			int total = buffer.remaining();
+			int written = writeByteBuffer(buffer);
 
 			if (logger.isTraceEnabled()) {
 				logger.trace("written: " + written + " total: " + total);

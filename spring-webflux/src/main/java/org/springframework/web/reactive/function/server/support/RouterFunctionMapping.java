@@ -23,7 +23,10 @@ import reactor.core.publisher.Mono;
 
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.codec.HttpMessageReader;
 import org.springframework.http.codec.ServerCodecConfigurer;
+import org.springframework.lang.Nullable;
+import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.reactive.function.server.RouterFunction;
 import org.springframework.web.reactive.function.server.RouterFunctions;
@@ -43,9 +46,11 @@ import org.springframework.web.server.ServerWebExchange;
  */
 public class RouterFunctionMapping extends AbstractHandlerMapping implements InitializingBean {
 
+	@Nullable
 	private RouterFunction<?> routerFunction;
 
-	private ServerCodecConfigurer messageCodecConfigurer;
+	private List<HttpMessageReader<?>> messageReaders = Collections.emptyList();
+
 
 	/**
 	 * Create an empty {@code RouterFunctionMapping}.
@@ -64,20 +69,23 @@ public class RouterFunctionMapping extends AbstractHandlerMapping implements Ini
 		this.routerFunction = routerFunction;
 	}
 
+
 	/**
 	 * Configure HTTP message readers to de-serialize the request body with.
-	 * <p>By default this is set to {@link ServerCodecConfigurer} with defaults.
+	 * <p>By default this is set to the {@link ServerCodecConfigurer}'s defaults.
 	 */
-	public void setMessageCodecConfigurer(ServerCodecConfigurer configurer) {
-		this.messageCodecConfigurer = configurer;
+	public void setMessageReaders(List<HttpMessageReader<?>> messageReaders) {
+		Assert.notNull(messageReaders, "'messageReaders' must not be null");
+		this.messageReaders = messageReaders;
 	}
-
 
 	@Override
 	public void afterPropertiesSet() throws Exception {
-		if (this.messageCodecConfigurer == null) {
-			this.messageCodecConfigurer = ServerCodecConfigurer.create();
+		if (CollectionUtils.isEmpty(this.messageReaders)) {
+			ServerCodecConfigurer codecConfigurer = ServerCodecConfigurer.create();
+			this.messageReaders = codecConfigurer.getReaders();
 		}
+
 		if (this.routerFunction == null) {
 			initRouterFunctions();
 		}
@@ -114,7 +122,7 @@ public class RouterFunctionMapping extends AbstractHandlerMapping implements Ini
 	@Override
 	protected Mono<?> getHandlerInternal(ServerWebExchange exchange) {
 		if (this.routerFunction != null) {
-			ServerRequest request = ServerRequest.create(exchange, this.messageCodecConfigurer.getReaders());
+			ServerRequest request = ServerRequest.create(exchange, this.messageReaders);
 			exchange.getAttributes().put(RouterFunctions.REQUEST_ATTRIBUTE, request);
 			return this.routerFunction.route(request);
 		}
@@ -123,8 +131,10 @@ public class RouterFunctionMapping extends AbstractHandlerMapping implements Ini
 		}
 	}
 
+
 	private static class SortedRouterFunctionsContainer {
 
+		@Nullable
 		private List<RouterFunction<?>> routerFunctions;
 
 		@Autowired(required = false)

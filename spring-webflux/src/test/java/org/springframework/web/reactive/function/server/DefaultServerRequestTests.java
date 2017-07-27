@@ -37,6 +37,7 @@ import org.springframework.core.codec.StringDecoder;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.core.io.buffer.DefaultDataBuffer;
 import org.springframework.core.io.buffer.DefaultDataBufferFactory;
+import org.springframework.http.HttpCookie;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpRange;
@@ -45,9 +46,11 @@ import org.springframework.http.codec.DecoderHttpMessageReader;
 import org.springframework.http.codec.HttpMessageReader;
 import org.springframework.mock.http.server.reactive.test.MockServerHttpRequest;
 import org.springframework.mock.http.server.reactive.test.MockServerWebExchange;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.server.UnsupportedMediaTypeStatusException;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 import static org.springframework.web.reactive.function.BodyExtractors.toMono;
 
 /**
@@ -108,6 +111,14 @@ public class DefaultServerRequestTests {
 		DefaultServerRequest request = new DefaultServerRequest(mockRequest.toExchange(), messageReaders);
 
 		assertEquals(Optional.of(""), request.queryParam("foo"));
+	}
+
+	@Test
+	public void absentQueryParam() throws Exception {
+		MockServerHttpRequest mockRequest = MockServerHttpRequest.method(HttpMethod.GET, "http://example.com?foo").build();
+		DefaultServerRequest request = new DefaultServerRequest(mockRequest.toExchange(), messageReaders);
+
+		assertEquals(Optional.empty(), request.queryParam("bar"));
 	}
 
 	@Test
@@ -174,6 +185,22 @@ public class DefaultServerRequestTests {
 		assertEquals(OptionalLong.of(contentLength), headers.contentLength());
 		assertEquals(Optional.of(contentType), headers.contentType());
 		assertEquals(httpHeaders, headers.asHttpHeaders());
+	}
+
+	@Test
+	public void cookies() {
+		HttpCookie cookie = new HttpCookie("foo", "bar");
+		MockServerHttpRequest mockRequest = MockServerHttpRequest.method(HttpMethod.GET, "http://example.com").
+				cookie(cookie).build();
+		MockServerWebExchange exchange = new MockServerWebExchange(mockRequest);
+
+		DefaultServerRequest request = new DefaultServerRequest(exchange, messageReaders);
+
+		MultiValueMap<String, HttpCookie> expected = new LinkedMultiValueMap<>();
+		expected.add("foo", cookie);
+
+		assertEquals(expected, request.cookies());
+
 	}
 
 	@Test

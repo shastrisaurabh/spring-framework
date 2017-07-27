@@ -70,7 +70,7 @@ public class HttpComponentsAsyncClientHttpRequestFactory extends HttpComponentsC
 	 */
 	public HttpComponentsAsyncClientHttpRequestFactory(HttpAsyncClient asyncClient) {
 		super();
-		setAsyncClient(asyncClient);
+		this.asyncClient = asyncClient;
 	}
 
 	/**
@@ -80,7 +80,7 @@ public class HttpComponentsAsyncClientHttpRequestFactory extends HttpComponentsC
 	 */
 	public HttpComponentsAsyncClientHttpRequestFactory(CloseableHttpAsyncClient asyncClient) {
 		super();
-		setAsyncClient(asyncClient);
+		this.asyncClient = asyncClient;
 	}
 
 	/**
@@ -92,7 +92,7 @@ public class HttpComponentsAsyncClientHttpRequestFactory extends HttpComponentsC
 	 */
 	public HttpComponentsAsyncClientHttpRequestFactory(HttpClient httpClient, HttpAsyncClient asyncClient) {
 		super(httpClient);
-		setAsyncClient(asyncClient);
+		this.asyncClient = asyncClient;
 	}
 
 	/**
@@ -105,7 +105,7 @@ public class HttpComponentsAsyncClientHttpRequestFactory extends HttpComponentsC
 			CloseableHttpClient httpClient, CloseableHttpAsyncClient asyncClient) {
 
 		super(httpClient);
-		setAsyncClient(asyncClient);
+		this.asyncClient = asyncClient;
 	}
 
 
@@ -147,7 +147,7 @@ public class HttpComponentsAsyncClientHttpRequestFactory extends HttpComponentsC
 	 */
 	@Deprecated
 	public CloseableHttpAsyncClient getHttpAsyncClient() {
-		Assert.state(this.asyncClient == null || this.asyncClient instanceof CloseableHttpAsyncClient,
+		Assert.state(this.asyncClient instanceof CloseableHttpAsyncClient,
 				"No CloseableHttpAsyncClient - use getAsyncClient() instead");
 		return (CloseableHttpAsyncClient) this.asyncClient;
 	}
@@ -158,19 +158,20 @@ public class HttpComponentsAsyncClientHttpRequestFactory extends HttpComponentsC
 		startAsyncClient();
 	}
 
-	private void startAsyncClient() {
-        HttpAsyncClient asyncClient = getAsyncClient();
-		if (asyncClient instanceof CloseableHttpAsyncClient) {
-			CloseableHttpAsyncClient closeableAsyncClient = (CloseableHttpAsyncClient) asyncClient;
+	private HttpAsyncClient startAsyncClient() {
+        HttpAsyncClient client = getAsyncClient();
+		if (client instanceof CloseableHttpAsyncClient) {
+			CloseableHttpAsyncClient closeableAsyncClient = (CloseableHttpAsyncClient) client;
 			if (!closeableAsyncClient.isRunning()) {
 				closeableAsyncClient.start();
 			}
 		}
+		return client;
 	}
 
 	@Override
 	public AsyncClientHttpRequest createAsyncRequest(URI uri, HttpMethod httpMethod) throws IOException {
-		startAsyncClient();
+		HttpAsyncClient client = startAsyncClient();
 
 		HttpUriRequest httpRequest = createHttpUriRequest(httpMethod, uri);
 		postProcessHttpRequest(httpRequest);
@@ -187,14 +188,14 @@ public class HttpComponentsAsyncClientHttpRequestFactory extends HttpComponentsC
 				config = ((Configurable) httpRequest).getConfig();
 			}
 			if (config == null) {
-				config = createRequestConfig(getAsyncClient());
+				config = createRequestConfig(client);
 			}
 			if (config != null) {
 				context.setAttribute(HttpClientContext.REQUEST_CONFIG, config);
 			}
 		}
 
-		return new HttpComponentsAsyncClientHttpRequest(getAsyncClient(), httpRequest, context);
+		return new HttpComponentsAsyncClientHttpRequest(client, httpRequest, context);
 	}
 
 	@Override

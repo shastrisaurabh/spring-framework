@@ -110,8 +110,10 @@ import org.springframework.util.Assert;
 public class HibernateTransactionManager extends AbstractPlatformTransactionManager
 		implements ResourceTransactionManager, BeanFactoryAware, InitializingBean {
 
+	@Nullable
 	private SessionFactory sessionFactory;
 
+	@Nullable
 	private DataSource dataSource;
 
 	private boolean autodetectDataSource = true;
@@ -122,12 +124,14 @@ public class HibernateTransactionManager extends AbstractPlatformTransactionMana
 
 	private boolean hibernateManagedSession = false;
 
+	@Nullable
 	private Object entityInterceptor;
 
 	/**
 	 * Just needed for entityInterceptorBeanName.
 	 * @see #setEntityInterceptorBeanName
 	 */
+	@Nullable
 	private BeanFactory beanFactory;
 
 
@@ -152,7 +156,7 @@ public class HibernateTransactionManager extends AbstractPlatformTransactionMana
 	/**
 	 * Set the SessionFactory that this instance should manage transactions for.
 	 */
-	public void setSessionFactory(SessionFactory sessionFactory) {
+	public void setSessionFactory(@Nullable SessionFactory sessionFactory) {
 		this.sessionFactory = sessionFactory;
 	}
 
@@ -198,8 +202,8 @@ public class HibernateTransactionManager extends AbstractPlatformTransactionMana
 	 * @see DataSourceUtils
 	 * @see org.springframework.jdbc.core.JdbcTemplate
 	 */
-	public void setDataSource(DataSource dataSource) {
-		if (dataSource instanceof TransactionAwareDataSourceProxy) {
+	public void setDataSource(@Nullable DataSource dataSource) {
+		if (dataSource != null && dataSource instanceof TransactionAwareDataSourceProxy) {
 			// If we got a TransactionAwareDataSourceProxy, we need to perform transactions
 			// for its underlying target DataSource, else data access code won't see
 			// properly exposed transactions (i.e. transactions for the target DataSource).
@@ -315,7 +319,7 @@ public class HibernateTransactionManager extends AbstractPlatformTransactionMana
 	 * HibernateTransactionManager.
 	 * @see LocalSessionFactoryBean#setEntityInterceptor
 	 */
-	public void setEntityInterceptor(Interceptor entityInterceptor) {
+	public void setEntityInterceptor(@Nullable Interceptor entityInterceptor) {
 		this.entityInterceptor = entityInterceptor;
 	}
 
@@ -788,12 +792,14 @@ public class HibernateTransactionManager extends AbstractPlatformTransactionMana
 	 */
 	private class HibernateTransactionObject extends JdbcTransactionObjectSupport {
 
+		@Nullable
 		private SessionHolder sessionHolder;
 
 		private boolean newSessionHolder;
 
 		private boolean newSession;
 
+		@Nullable
 		private Integer previousHoldability;
 
 		public void setSession(Session session) {
@@ -831,7 +837,7 @@ public class HibernateTransactionManager extends AbstractPlatformTransactionMana
 			return this.newSession;
 		}
 
-		public void setPreviousHoldability(Integer previousHoldability) {
+		public void setPreviousHoldability(@Nullable Integer previousHoldability) {
 			this.previousHoldability = previousHoldability;
 		}
 
@@ -850,7 +856,7 @@ public class HibernateTransactionManager extends AbstractPlatformTransactionMana
 		}
 
 		public void setRollbackOnly() {
-			this.sessionHolder.setRollbackOnly();
+			getSessionHolder().setRollbackOnly();
 			if (hasConnectionHolder()) {
 				getConnectionHolder().setRollbackOnly();
 			}
@@ -858,14 +864,14 @@ public class HibernateTransactionManager extends AbstractPlatformTransactionMana
 
 		@Override
 		public boolean isRollbackOnly() {
-			return this.sessionHolder.isRollbackOnly() ||
+			return getSessionHolder().isRollbackOnly() ||
 					(hasConnectionHolder() && getConnectionHolder().isRollbackOnly());
 		}
 
 		@Override
 		public void flush() {
 			try {
-				this.sessionHolder.getSession().flush();
+				getSessionHolder().getSession().flush();
 			}
 			catch (HibernateException ex) {
 				throw convertHibernateAccessException(ex);
@@ -888,6 +894,7 @@ public class HibernateTransactionManager extends AbstractPlatformTransactionMana
 
 		private final SessionHolder sessionHolder;
 
+		@Nullable
 		private final ConnectionHolder connectionHolder;
 
 		private SuspendedResourcesHolder(SessionHolder sessionHolder, @Nullable ConnectionHolder conHolder) {

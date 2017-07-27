@@ -116,16 +116,22 @@ import org.springframework.web.util.WebUtils;
 public class RequestMappingHandlerAdapter extends AbstractHandlerMethodAdapter
 		implements BeanFactoryAware, InitializingBean {
 
+	@Nullable
 	private List<HandlerMethodArgumentResolver> customArgumentResolvers;
 
+	@Nullable
 	private HandlerMethodArgumentResolverComposite argumentResolvers;
 
+	@Nullable
 	private HandlerMethodArgumentResolverComposite initBinderArgumentResolvers;
 
+	@Nullable
 	private List<HandlerMethodReturnValueHandler> customReturnValueHandlers;
 
+	@Nullable
 	private HandlerMethodReturnValueHandlerComposite returnValueHandlers;
 
+	@Nullable
 	private List<ModelAndViewResolver> modelAndViewResolvers;
 
 	private ContentNegotiationManager contentNegotiationManager = new ContentNegotiationManager();
@@ -134,10 +140,12 @@ public class RequestMappingHandlerAdapter extends AbstractHandlerMethodAdapter
 
 	private List<Object> requestResponseBodyAdvice = new ArrayList<>();
 
+	@Nullable
 	private WebBindingInitializer webBindingInitializer;
 
 	private AsyncTaskExecutor taskExecutor = new SimpleAsyncTaskExecutor("MvcAsync");
 
+	@Nullable
 	private Long asyncRequestTimeout;
 
 	private CallableProcessingInterceptor[] callableInterceptors = new CallableProcessingInterceptor[0];
@@ -156,21 +164,19 @@ public class RequestMappingHandlerAdapter extends AbstractHandlerMethodAdapter
 
 	private ParameterNameDiscoverer parameterNameDiscoverer = new DefaultParameterNameDiscoverer();
 
+	@Nullable
 	private ConfigurableBeanFactory beanFactory;
 
 
-	private final Map<Class<?>, SessionAttributesHandler> sessionAttributesHandlerCache =
-			new ConcurrentHashMap<>(64);
+	private final Map<Class<?>, SessionAttributesHandler> sessionAttributesHandlerCache = new ConcurrentHashMap<>(64);
 
 	private final Map<Class<?>, Set<Method>> initBinderCache = new ConcurrentHashMap<>(64);
 
-	private final Map<ControllerAdviceBean, Set<Method>> initBinderAdviceCache =
-			new LinkedHashMap<>();
+	private final Map<ControllerAdviceBean, Set<Method>> initBinderAdviceCache = new LinkedHashMap<>();
 
 	private final Map<Class<?>, Set<Method>> modelAttributeCache = new ConcurrentHashMap<>(64);
 
-	private final Map<ControllerAdviceBean, Set<Method>> modelAttributeAdviceCache =
-			new LinkedHashMap<>();
+	private final Map<ControllerAdviceBean, Set<Method>> modelAttributeAdviceCache = new LinkedHashMap<>();
 
 
 	public RequestMappingHandlerAdapter() {
@@ -190,7 +196,7 @@ public class RequestMappingHandlerAdapter extends AbstractHandlerMethodAdapter
 	 * after built-in ones. To override the built-in support for argument
 	 * resolution use {@link #setArgumentResolvers} instead.
 	 */
-	public void setCustomArgumentResolvers(List<HandlerMethodArgumentResolver> argumentResolvers) {
+	public void setCustomArgumentResolvers(@Nullable List<HandlerMethodArgumentResolver> argumentResolvers) {
 		this.customArgumentResolvers = argumentResolvers;
 	}
 
@@ -252,7 +258,7 @@ public class RequestMappingHandlerAdapter extends AbstractHandlerMethodAdapter
 	 * ordered after built-in ones. To override the built-in support for
 	 * return value handling use {@link #setReturnValueHandlers}.
 	 */
-	public void setCustomReturnValueHandlers(List<HandlerMethodReturnValueHandler> returnValueHandlers) {
+	public void setCustomReturnValueHandlers(@Nullable List<HandlerMethodReturnValueHandler> returnValueHandlers) {
 		this.customReturnValueHandlers = returnValueHandlers;
 	}
 
@@ -284,7 +290,7 @@ public class RequestMappingHandlerAdapter extends AbstractHandlerMethodAdapter
 	 */
 	@Nullable
 	public List<HandlerMethodReturnValueHandler> getReturnValueHandlers() {
-		return this.returnValueHandlers.getHandlers();
+		return (this.returnValueHandlers != null ? this.returnValueHandlers.getHandlers() : null);
 	}
 
 	/**
@@ -301,7 +307,7 @@ public class RequestMappingHandlerAdapter extends AbstractHandlerMethodAdapter
 	 * the return type and controller method information and can be ordered
 	 * freely relative to other return value handlers.
 	 */
-	public void setModelAndViewResolvers(List<ModelAndViewResolver> modelAndViewResolvers) {
+	public void setModelAndViewResolvers(@Nullable List<ModelAndViewResolver> modelAndViewResolvers) {
 		this.modelAndViewResolvers = modelAndViewResolvers;
 	}
 
@@ -310,7 +316,7 @@ public class RequestMappingHandlerAdapter extends AbstractHandlerMethodAdapter
 	 */
 	@Nullable
 	public List<ModelAndViewResolver> getModelAndViewResolvers() {
-		return modelAndViewResolvers;
+		return this.modelAndViewResolvers;
 	}
 
 	/**
@@ -363,7 +369,7 @@ public class RequestMappingHandlerAdapter extends AbstractHandlerMethodAdapter
 	 * Provide a WebBindingInitializer with "global" initialization to apply
 	 * to every DataBinder instance.
 	 */
-	public void setWebBindingInitializer(WebBindingInitializer webBindingInitializer) {
+	public void setWebBindingInitializer(@Nullable WebBindingInitializer webBindingInitializer) {
 		this.webBindingInitializer = webBindingInitializer;
 	}
 
@@ -827,8 +833,12 @@ public class RequestMappingHandlerAdapter extends AbstractHandlerMethodAdapter
 			ModelFactory modelFactory = getModelFactory(handlerMethod, binderFactory);
 
 			ServletInvocableHandlerMethod invocableMethod = createInvocableHandlerMethod(handlerMethod);
-			invocableMethod.setHandlerMethodArgumentResolvers(this.argumentResolvers);
-			invocableMethod.setHandlerMethodReturnValueHandlers(this.returnValueHandlers);
+			if (this.argumentResolvers != null) {
+				invocableMethod.setHandlerMethodArgumentResolvers(this.argumentResolvers);
+			}
+			if (this.returnValueHandlers != null) {
+				invocableMethod.setHandlerMethodReturnValueHandlers(this.returnValueHandlers);
+			}
 			invocableMethod.setDataBinderFactory(binderFactory);
 			invocableMethod.setParameterNameDiscoverer(this.parameterNameDiscoverer);
 
@@ -905,7 +915,9 @@ public class RequestMappingHandlerAdapter extends AbstractHandlerMethodAdapter
 
 	private InvocableHandlerMethod createModelAttributeMethod(WebDataBinderFactory factory, Object bean, Method method) {
 		InvocableHandlerMethod attrMethod = new InvocableHandlerMethod(bean, method);
-		attrMethod.setHandlerMethodArgumentResolvers(this.argumentResolvers);
+		if (this.argumentResolvers != null) {
+			attrMethod.setHandlerMethodArgumentResolvers(this.argumentResolvers);
+		}
 		attrMethod.setParameterNameDiscoverer(this.parameterNameDiscoverer);
 		attrMethod.setDataBinderFactory(factory);
 		return attrMethod;
@@ -937,7 +949,9 @@ public class RequestMappingHandlerAdapter extends AbstractHandlerMethodAdapter
 
 	private InvocableHandlerMethod createInitBinderMethod(Object bean, Method method) {
 		InvocableHandlerMethod binderMethod = new InvocableHandlerMethod(bean, method);
-		binderMethod.setHandlerMethodArgumentResolvers(this.initBinderArgumentResolvers);
+		if (this.initBinderArgumentResolvers != null) {
+			binderMethod.setHandlerMethodArgumentResolvers(this.initBinderArgumentResolvers);
+		}
 		binderMethod.setDataBinderFactory(new DefaultDataBinderFactory(this.webBindingInitializer));
 		binderMethod.setParameterNameDiscoverer(this.parameterNameDiscoverer);
 		return binderMethod;

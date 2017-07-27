@@ -52,9 +52,10 @@ public abstract class AbstractMessageSendingTemplate<D> implements MessageSendin
 
 	protected final Log logger = LogFactory.getLog(getClass());
 
-	private volatile D defaultDestination;
+	@Nullable
+	private D defaultDestination;
 
-	private volatile MessageConverter converter = new SimpleMessageConverter();
+	private MessageConverter converter = new SimpleMessageConverter();
 
 
 	/**
@@ -62,7 +63,7 @@ public abstract class AbstractMessageSendingTemplate<D> implements MessageSendin
 	 * a destination argument. If a default destination is not configured, send methods
 	 * without a destination argument will raise an exception if invoked.
 	 */
-	public void setDefaultDestination(D defaultDestination) {
+	public void setDefaultDestination(@Nullable D defaultDestination) {
 		this.defaultDestination = defaultDestination;
 	}
 

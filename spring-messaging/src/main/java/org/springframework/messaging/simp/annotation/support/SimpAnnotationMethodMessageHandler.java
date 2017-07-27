@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.EmbeddedValueResolverAware;
 import org.springframework.context.SmartLifecycle;
@@ -101,10 +102,13 @@ public class SimpAnnotationMethodMessageHandler extends AbstractMethodMessageHan
 
 	private boolean slashPathSeparator = true;
 
+	@Nullable
 	private Validator validator;
 
+	@Nullable
 	private StringValueResolver valueResolver;
 
+	@Nullable
 	private MessageHeaderInitializer headerInitializer;
 
 	private final Object lifecycleMonitor = new Object();
@@ -221,6 +225,7 @@ public class SimpAnnotationMethodMessageHandler extends AbstractMethodMessageHan
 	/**
 	 * Return the configured Validator instance.
 	 */
+	@Nullable
 	public Validator getValidator() {
 		return this.validator;
 	}
@@ -230,7 +235,7 @@ public class SimpAnnotationMethodMessageHandler extends AbstractMethodMessageHan
 	 * @see org.springframework.validation.annotation.Validated
 	 * @see PayloadArgumentResolver
 	 */
-	public void setValidator(Validator validator) {
+	public void setValidator(@Nullable Validator validator) {
 		this.validator = validator;
 	}
 
@@ -245,13 +250,14 @@ public class SimpAnnotationMethodMessageHandler extends AbstractMethodMessageHan
 	 * that send messages from controller return values.
 	 * <p>By default, this property is not set.
 	 */
-	public void setHeaderInitializer(MessageHeaderInitializer headerInitializer) {
+	public void setHeaderInitializer(@Nullable MessageHeaderInitializer headerInitializer) {
 		this.headerInitializer = headerInitializer;
 	}
 
 	/**
 	 * Return the configured header initializer.
 	 */
+	@Nullable
 	public MessageHeaderInitializer getHeaderInitializer() {
 		return this.headerInitializer;
 	}
@@ -300,8 +306,9 @@ public class SimpAnnotationMethodMessageHandler extends AbstractMethodMessageHan
 
 
 	protected List<HandlerMethodArgumentResolver> initArgumentResolvers() {
-		ConfigurableBeanFactory beanFactory = (getApplicationContext() instanceof ConfigurableApplicationContext ?
-				((ConfigurableApplicationContext) getApplicationContext()).getBeanFactory() : null);
+		ApplicationContext context = getApplicationContext();
+		ConfigurableBeanFactory beanFactory = (context instanceof ConfigurableApplicationContext ?
+				((ConfigurableApplicationContext) context).getBeanFactory() : null);
 
 		List<HandlerMethodArgumentResolver> resolvers = new ArrayList<>();
 
@@ -331,7 +338,9 @@ public class SimpAnnotationMethodMessageHandler extends AbstractMethodMessageHan
 		// Annotation-based return value types
 		SendToMethodReturnValueHandler sendToHandler =
 				new SendToMethodReturnValueHandler(this.brokerTemplate, true);
-		sendToHandler.setHeaderInitializer(this.headerInitializer);
+		if (this.headerInitializer != null) {
+			sendToHandler.setHeaderInitializer(this.headerInitializer);
+		}
 		handlers.add(sendToHandler);
 
 		SubscriptionMethodReturnValueHandler subscriptionHandler =

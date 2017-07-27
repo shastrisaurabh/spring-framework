@@ -34,10 +34,13 @@ import org.springframework.lang.Nullable;
 @SuppressWarnings("serial")
 public class ManagedMap<K, V> extends LinkedHashMap<K, V> implements Mergeable, BeanMetadataElement {
 
+	@Nullable
 	private Object source;
 
+	@Nullable
 	private String keyTypeName;
 
+	@Nullable
 	private String valueTypeName;
 
 	private boolean mergeEnabled;
@@ -60,6 +63,7 @@ public class ManagedMap<K, V> extends LinkedHashMap<K, V> implements Mergeable, 
 	}
 
 	@Override
+	@Nullable
 	public Object getSource() {
 		return this.source;
 	}
@@ -67,13 +71,14 @@ public class ManagedMap<K, V> extends LinkedHashMap<K, V> implements Mergeable, 
 	/**
 	 * Set the default key type name (class name) to be used for this map.
 	 */
-	public void setKeyTypeName(String keyTypeName) {
+	public void setKeyTypeName(@Nullable String keyTypeName) {
 		this.keyTypeName = keyTypeName;
 	}
 
 	/**
 	 * Return the default key type name (class name) to be used for this map.
 	 */
+	@Nullable
 	public String getKeyTypeName() {
 		return this.keyTypeName;
 	}
@@ -81,13 +86,14 @@ public class ManagedMap<K, V> extends LinkedHashMap<K, V> implements Mergeable, 
 	/**
 	 * Set the default value type name (class name) to be used for this map.
 	 */
-	public void setValueTypeName(String valueTypeName) {
+	public void setValueTypeName(@Nullable String valueTypeName) {
 		this.valueTypeName = valueTypeName;
 	}
 
 	/**
 	 * Return the default value type name (class name) to be used for this map.
 	 */
+	@Nullable
 	public String getValueTypeName() {
 		return this.valueTypeName;
 	}

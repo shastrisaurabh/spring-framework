@@ -169,10 +169,13 @@ public class MockHttpServletRequest implements HttpServletRequest {
 
 	private final Map<String, Object> attributes = new LinkedHashMap<>();
 
+	@Nullable
 	private String characterEncoding;
 
+	@Nullable
 	private byte[] content;
 
+	@Nullable
 	private String contentType;
 
 	private final Map<String, String[]> parameters = new LinkedHashMap<>(16);
@@ -206,6 +209,7 @@ public class MockHttpServletRequest implements HttpServletRequest {
 
 	private boolean asyncSupported = false;
 
+	@Nullable
 	private MockAsyncContext asyncContext;
 
 	private DispatcherType dispatcherType = DispatcherType.REQUEST;
@@ -215,32 +219,42 @@ public class MockHttpServletRequest implements HttpServletRequest {
 	// HttpServletRequest properties
 	// ---------------------------------------------------------------------
 
+	@Nullable
 	private String authType;
 
+	@Nullable
 	private Cookie[] cookies;
 
 	private final Map<String, HeaderValueHolder> headers = new LinkedCaseInsensitiveMap<>();
 
+	@Nullable
 	private String method;
 
+	@Nullable
 	private String pathInfo;
 
 	private String contextPath = "";
 
+	@Nullable
 	private String queryString;
 
+	@Nullable
 	private String remoteUser;
 
 	private final Set<String> userRoles = new HashSet<>();
 
+	@Nullable
 	private Principal userPrincipal;
 
+	@Nullable
 	private String requestedSessionId;
 
+	@Nullable
 	private String requestURI;
 
 	private String servletPath = "";
 
+	@Nullable
 	private HttpSession session;
 
 	private boolean requestedSessionIdValid = true;
@@ -376,7 +390,7 @@ public class MockHttpServletRequest implements HttpServletRequest {
 	}
 
 	@Override
-	public void setCharacterEncoding(String characterEncoding) {
+	public void setCharacterEncoding(@Nullable String characterEncoding) {
 		this.characterEncoding = characterEncoding;
 		updateContentTypeHeader();
 	}
@@ -401,13 +415,13 @@ public class MockHttpServletRequest implements HttpServletRequest {
 	 * @see #getContentAsByteArray()
 	 * @see #getContentAsString()
 	 */
-	public void setContent(byte[] content) {
+	public void setContent(@Nullable byte[] content) {
 		this.content = content;
 	}
 
 	/**
 	 * Get the content of the request body as a byte array.
-	 * @return the content as a byte array, potentially {@code null}
+	 * @return the content as a byte array (potentially {@code null})
 	 * @since 5.0
 	 * @see #setContent(byte[])
 	 * @see #getContentAsString()
@@ -903,7 +917,7 @@ public class MockHttpServletRequest implements HttpServletRequest {
 		return this.asyncSupported;
 	}
 
-	public void setAsyncContext(MockAsyncContext asyncContext) {
+	public void setAsyncContext(@Nullable MockAsyncContext asyncContext) {
 		this.asyncContext = asyncContext;
 	}
 
@@ -927,11 +941,12 @@ public class MockHttpServletRequest implements HttpServletRequest {
 	// HttpServletRequest interface
 	// ---------------------------------------------------------------------
 
-	public void setAuthType(String authType) {
+	public void setAuthType(@Nullable String authType) {
 		this.authType = authType;
 	}
 
 	@Override
+	@Nullable
 	public String getAuthType() {
 		return this.authType;
 	}
@@ -1087,11 +1102,12 @@ public class MockHttpServletRequest implements HttpServletRequest {
 		}
 	}
 
-	public void setMethod(String method) {
+	public void setMethod(@Nullable String method) {
 		this.method = method;
 	}
 
 	@Override
+	@Nullable
 	public String getMethod() {
 		return this.method;
 	}
@@ -1101,6 +1117,7 @@ public class MockHttpServletRequest implements HttpServletRequest {
 	}
 
 	@Override
+	@Nullable
 	public String getPathInfo() {
 		return this.pathInfo;
 	}
@@ -1125,6 +1142,7 @@ public class MockHttpServletRequest implements HttpServletRequest {
 	}
 
 	@Override
+	@Nullable
 	public String getQueryString() {
 		return this.queryString;
 	}
@@ -1134,6 +1152,7 @@ public class MockHttpServletRequest implements HttpServletRequest {
 	}
 
 	@Override
+	@Nullable
 	public String getRemoteUser() {
 		return this.remoteUser;
 	}
@@ -1148,29 +1167,32 @@ public class MockHttpServletRequest implements HttpServletRequest {
 				((MockServletContext) this.servletContext).getDeclaredRoles().contains(role)));
 	}
 
-	public void setUserPrincipal(Principal userPrincipal) {
+	public void setUserPrincipal(@Nullable Principal userPrincipal) {
 		this.userPrincipal = userPrincipal;
 	}
 
 	@Override
+	@Nullable
 	public Principal getUserPrincipal() {
 		return this.userPrincipal;
 	}
 
-	public void setRequestedSessionId(String requestedSessionId) {
+	public void setRequestedSessionId(@Nullable String requestedSessionId) {
 		this.requestedSessionId = requestedSessionId;
 	}
 
 	@Override
+	@Nullable
 	public String getRequestedSessionId() {
 		return this.requestedSessionId;
 	}
 
-	public void setRequestURI(String requestURI) {
+	public void setRequestURI(@Nullable String requestURI) {
 		this.requestURI = requestURI;
 	}
 
 	@Override
+	@Nullable
 	public String getRequestURI() {
 		return this.requestURI;
 	}
